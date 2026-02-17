@@ -183,10 +183,10 @@ async function initApp() {
     updateLoadingStatus('Conectando con GitHub...');
     
     let user, repos;
-    let dataSource = 'api'; // Track data source: 'cache', 'api', or 'fallback'
+    let dataSource = 'api'; 
     
     try {
-        // 1. INTENTAR CACHÉ DEL NAVEGADOR PRIMERO
+        // 1. INTENTAR CACHÉ DEL NAVEGADOR
         const cached = getCachedData();
 
         if (cached) {
@@ -196,22 +196,34 @@ async function initApp() {
             user = cached.user;
             repos = cached.repos;
         } else {
-            // 2. CONSULTAR API DE GITHUB
-            updateLoadingStatus('Consultando API GitHub...');
-            console.log('🌐 Consultando API de GitHub...');
-            const [userRes, reposRes] = await Promise.all([
-                fetch(`https://api.github.com/users/${USERNAME}`),
-                fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`)
-            ]);
+            // 2. INTENTAR API DE GITHUB
+            try {
+                updateLoadingStatus('Consultando API GitHub...');
+                const [userRes, reposRes] = await Promise.all([
+                    fetch(`https://api.github.com/users/${USERNAME}`),
+                    fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`)
+                ]);
 
-            if (userRes.status === 403 || reposRes.status === 403) throw new Error('API_LIMIT');
-            if (!userRes.ok) throw new Error('Usuario no encontrado');
-            if (!reposRes.ok) throw new Error('Error al obtener repositorios');
+                if (userRes.status === 403 || reposRes.status === 403) throw new Error('API_LIMIT');
+                if (!userRes.ok) throw new Error('Error API');
 
-            user = await userRes.json();
-            repos = await reposRes.json();
-            saveToCache(user, repos);
-            console.log('✅ Datos obtenidos de la API y guardados en caché');
+                user = await userRes.json();
+                repos = await reposRes.json();
+                saveToCache(user, repos);
+                console.log('✅ Datos obtenidos de la API');
+
+            } catch (apiError) {
+                console.warn('⚠️ Fallo la API, intentando database.json local...');
+                
+                // 3. FALLBACK: CARGAR DATABASE.JSON (Lo que faltaba)
+                const localRes = await fetch('./database.json');
+                if (!localRes.ok) throw new Error('No se pudo cargar database.json local');
+                
+                const localData = await localRes.json();
+                user = localData.user;
+                repos = localData.repos;
+                dataSource = 'fallback'; // Indica que usamos el archivo local
+            }
         }
         
         updateLoadingStatus('Preparando interfaz...');
@@ -219,21 +231,16 @@ async function initApp() {
         hideLoading();
 
     } catch (error) {
-        console.error('Error en initApp:', error);
+        console.error('Error crítico:', error);
         
-        // 3. FALLBACK: USAR CACHÉ EXPIRADA SI ESTÁ DISPONIBLE
+        // Último recurso: Caché expirada
         const expiredData = getExpiredCache();
         if (expiredData) {
-            dataSource = 'fallback';
-            showToast('Modo Caché', 'Usando datos almacenados localmente (puede estar desactualizado)', 'warning');
-            updateLoadingStatus('Usando datos en caché...');
-            console.log('⚠️ Usando caché expirada como fallback');
-            processData(expiredData.user, expiredData.repos, dataSource);
+            showToast('Modo Offline', 'Usando datos antiguos guardados', 'warning');
+            processData(expiredData.user, expiredData.repos, 'fallback');
             hideLoading();
         } else {
-            showError(error.message === 'API_LIMIT' 
-                ? 'Límite de API excedido. Por favor, intenta de nuevo en unos minutos.' 
-                : 'Error de conexión. Por favor, verifica tu conexión a internet.');
+            showError('No se pudieron cargar los datos. Verifica tu conexión o espera unos minutos.');
         }
     }
 }
