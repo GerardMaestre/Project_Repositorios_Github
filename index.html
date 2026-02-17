@@ -189,6 +189,11 @@
         </div>
     </div>
 
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-2xl shadow-purple-500/50 opacity-0 pointer-events-none transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center group" aria-label="Volver arriba">
+        <i data-lucide="arrow-up" class="w-6 h-6 group-hover:animate-bounce"></i>
+    </button>
+
     <!-- Main Content -->
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl opacity-0 transition-opacity duration-1000" id="main-content" style="will-change: opacity">
         
@@ -307,7 +312,7 @@
         <!-- Search Bar -->
         <div class="sticky top-4 z-40 mb-10">
             <div class="glass-panel p-5 shadow-2xl">
-                <div class="flex flex-col lg:flex-row gap-5 items-stretch lg:items-center">
+                <div class="flex flex-col gap-5">
                     <!-- Search Input -->
                     <div class="relative flex-1 group">
                         <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 w-5 h-5 pointer-events-none group-focus-within:text-purple-400 transition-colors"></i>
@@ -317,11 +322,30 @@
                                class="w-full pl-14 pr-5 py-4 text-sm font-medium placeholder:text-white/40 transition-all">
                     </div>
                     
-                    <!-- Filters -->
-                    <div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide" id="filter-container">
-                        <button class="filter-pill active" data-filter="all" onclick="filterByLang('all', this)">
-                            Todos
-                        </button>
+                    <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                        <!-- Sort Buttons -->
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="text-xs font-bold text-white/50 uppercase tracking-wider self-center mr-2">Ordenar:</span>
+                            <button class="sort-btn active-sort text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="updated" onclick="applySorting('updated')">
+                                <i data-lucide="clock" class="w-3 h-3 inline"></i> Recientes
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="stars" onclick="applySorting('stars')">
+                                <i data-lucide="star" class="w-3 h-3 inline"></i> Estrellas
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="forks" onclick="applySorting('forks')">
+                                <i data-lucide="git-fork" class="w-3 h-3 inline"></i> Forks
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="name" onclick="applySorting('name')">
+                                <i data-lucide="arrow-down-a-z" class="w-3 h-3 inline"></i> A-Z
+                            </button>
+                        </div>
+                        
+                        <!-- Filters -->
+                        <div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide flex-1" id="filter-container">
+                            <button class="filter-pill active" data-filter="all" onclick="filterByLang('all', this)">
+                                Todos
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

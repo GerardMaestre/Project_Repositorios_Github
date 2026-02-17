@@ -56,6 +56,7 @@ let allRepos = [];
 let filteredRepos = [];
 let currentLangFilter = 'all';
 let visibleCount = ITEMS_PER_PAGE;
+let currentSort = 'updated'; // 'updated', 'stars', 'forks', 'name'
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -77,6 +78,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
+    
+    // Scroll to top button
+    const scrollBtn = document.getElementById('scroll-to-top');
+    scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    // Show/hide scroll to top button with debounce
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            if (window.scrollY > 300) {
+                scrollBtn.style.opacity = '1';
+                scrollBtn.style.pointerEvents = 'auto';
+            } else {
+                scrollBtn.style.opacity = '0';
+                scrollBtn.style.pointerEvents = 'none';
+            }
+        }, 100);
+    });
 });
 
 // --- GESTIÓN DE CACHÉ ---
@@ -225,8 +247,8 @@ function renderProfile(user) {
     
     document.getElementById('name').textContent = user.name || USERNAME;
     document.getElementById('username').textContent = `@${user.login}`;
-    document.getElementById('followers').textContent = user.followers;
-    document.getElementById('following').textContent = user.following;
+    animateCounter(document.getElementById('followers'), user.followers, 1000);
+    animateCounter(document.getElementById('following'), user.following, 1000);
     document.getElementById('github-link').href = user.html_url;
 }
 
@@ -239,9 +261,10 @@ function calculateStats(repos) {
         ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b) 
         : 'N/A';
 
-    document.getElementById('total-repos').textContent = repos.length;
-    document.getElementById('total-stars').textContent = totalStars;
-    document.getElementById('total-forks').textContent = totalForks;
+    // Use animated counters
+    animateCounter(document.getElementById('total-repos'), repos.length, 1200);
+    animateCounter(document.getElementById('total-stars'), totalStars, 1500);
+    animateCounter(document.getElementById('total-forks'), totalForks, 1500);
     document.getElementById('top-lang').textContent = topLang;
 }
 
@@ -279,6 +302,14 @@ function renderRepos(repos, append = false) {
         const repoCloneUrl = sanitizeUrl(repo.clone_url);
         const repoHtmlUrl = sanitizeUrl(repo.html_url);
         const editorUrl = repoHtmlUrl.replace('github.com', 'github.dev');
+        
+        // Calculate days since last update
+        const daysSinceUpdate = Math.floor((new Date() - new Date(repo.pushed_at)) / (1000 * 60 * 60 * 24));
+        const updateBadge = daysSinceUpdate === 0 ? 'Hoy' : 
+                           daysSinceUpdate === 1 ? 'Ayer' : 
+                           daysSinceUpdate < 7 ? `Hace ${daysSinceUpdate} días` :
+                           daysSinceUpdate < 30 ? `Hace ${Math.floor(daysSinceUpdate / 7)} semanas` :
+                           `Hace ${Math.floor(daysSinceUpdate / 30)} meses`;
         
         // Configuración de URLs
         let hasWeb = false;
@@ -335,7 +366,14 @@ function renderRepos(repos, append = false) {
                 </div>
             </div>
             
-            ${badgesHtml} 
+            ${badgesHtml}
+            
+            <div class="mb-2">
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-white/50 bg-white/5 px-2 py-1 rounded-full border border-white/10">
+                    <i data-lucide="clock" class="w-3 h-3"></i>
+                    ${updateBadge}
+                </span>
+            </div>
             
             <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${repoName}</h3>
             <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${repoDesc}</p>
@@ -378,6 +416,11 @@ function renderRepos(repos, append = false) {
         loadMoreBtn.classList.add('hidden');
     }
     showingCountLabel.textContent = `Mostrando ${Math.min(visibleCount, repos.length)} de ${repos.length}`;
+    
+    // Setup intersection observer for animation
+    if (!append) {
+        setTimeout(() => setupIntersectionObserver(), 100);
+    }
 }
 
 // --- FILTROS Y BÚSQUEDA ---
@@ -418,6 +461,8 @@ function handleSearch(term) {
         const matchesLang = currentLangFilter === 'all' || repo.language === currentLangFilter;
         return matchesSearch && matchesLang;
     });
+    // Apply current sorting
+    filteredRepos = sortRepositories(filteredRepos, currentSort);
     visibleCount = ITEMS_PER_PAGE;
     renderRepos(filteredRepos);
 }
@@ -689,4 +734,74 @@ function handleGlobalKeyboard(e) {
             closeModal();
         }
     }
+}
+
+// --- ANIMATED COUNTER ---
+function animateCounter(element, target, duration = 1500) {
+    const start = 0;
+    const increment = target / (duration / 16); // 60fps
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// --- INTERSECTION OBSERVER FOR CARDS ---
+function setupIntersectionObserver() {
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, options);
+    
+    // Observe all repo cards
+    document.querySelectorAll('.repo-card').forEach(card => {
+        card.classList.add('fade-in-hidden');
+        observer.observe(card);
+    });
+}
+
+// --- SORT REPOSITORIES ---
+function sortRepositories(repos, sortBy) {
+    const sorted = [...repos];
+    switch(sortBy) {
+        case 'stars':
+            return sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
+        case 'forks':
+            return sorted.sort((a, b) => b.forks_count - a.forks_count);
+        case 'name':
+            return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        case 'updated':
+        default:
+            return sorted.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+    }
+}
+
+function applySorting(sortBy) {
+    currentSort = sortBy;
+    filteredRepos = sortRepositories(filteredRepos, sortBy);
+    visibleCount = ITEMS_PER_PAGE;
+    renderRepos(filteredRepos);
+    
+    // Update active state in sort buttons
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.remove('active-sort');
+    });
+    document.querySelector(`[data-sort="${sortBy}"]`)?.classList.add('active-sort');
 }
