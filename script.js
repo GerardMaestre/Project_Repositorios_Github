@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 9;
 const CACHE_KEY_USER = `gh_user_${USERNAME}`;
 const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 Minutos en milisegundos
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutos en milisegundos
 
 // Constantes de estilos para evitar duplicación
 const FILTER_BTN_INACTIVE = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
@@ -117,18 +117,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- GESTIÓN DE CACHÉ ---
 function getCachedData() {
-    const timestamp = localStorage.getItem(CACHE_KEY_TIME);
-    const user = localStorage.getItem(CACHE_KEY_USER);
-    const repos = localStorage.getItem(CACHE_KEY_REPOS);
+    try {
+        const timestamp = localStorage.getItem(CACHE_KEY_TIME);
+        const user = localStorage.getItem(CACHE_KEY_USER);
+        const repos = localStorage.getItem(CACHE_KEY_REPOS);
 
-    if (!timestamp || !user || !repos) return null;
+        if (!timestamp || !user || !repos) return null;
 
-    const now = new Date().getTime();
-    // Si la caché es reciente (menos de 15 min), úsala
-    if (now - parseInt(timestamp) < CACHE_DURATION) {
-        return { user: JSON.parse(user), repos: JSON.parse(repos) };
+        const now = new Date().getTime();
+        // Si la caché es reciente (menos de 60 min), úsala
+        if (now - parseInt(timestamp) < CACHE_DURATION) {
+            return { user: JSON.parse(user), repos: JSON.parse(repos) };
+        }
+        return null; // Caché expirada, intentar fetch
+    } catch (e) {
+        console.warn('Error al leer caché, limpiando datos corruptos:', e);
+        clearCache();
+        return null;
     }
-    return null; // Caché expirada, intentar fetch
 }
 
 function saveToCache(user, repos) {
@@ -142,51 +148,57 @@ function saveToCache(user, repos) {
 }
 
 function getExpiredCache() {
-        // Fallback: Recuperar datos viejos si la API falla
-    const user = localStorage.getItem(CACHE_KEY_USER);
-    const repos = localStorage.getItem(CACHE_KEY_REPOS);
-    if (user && repos) {
-        return { user: JSON.parse(user), repos: JSON.parse(repos) };
+    // Fallback: Recuperar datos viejos si la API falla
+    try {
+        const user = localStorage.getItem(CACHE_KEY_USER);
+        const repos = localStorage.getItem(CACHE_KEY_REPOS);
+        if (user && repos) {
+            return { user: JSON.parse(user), repos: JSON.parse(repos) };
+        }
+        return null;
+    } catch (e) {
+        console.warn('Error al parsear caché expirada:', e);
+        clearCache();
+        return null;
     }
-    return null;
+}
+
+function clearCache() {
+    try {
+        localStorage.removeItem(CACHE_KEY_USER);
+        localStorage.removeItem(CACHE_KEY_REPOS);
+        localStorage.removeItem(CACHE_KEY_TIME);
+    } catch (e) {
+        console.warn('Error al limpiar caché:', e);
+    }
+}
+
+function forceRefreshData() {
+    clearCache();
+    location.reload();
 }
 
 // --- LÓGICA PRINCIPAL BLINDADA ---
 async function initApp() {
     updateLoadingStatus('Conectando con GitHub...');
     
-    try {
-        // 1. ESTRATEGIA "ZERO-API" (Prioridad Máxima)
-        // Intentamos cargar un archivo local generado previamente.
-        // Si existe, la web carga instantánea y NO consume cuota de GitHub.
-        const staticResponse = await fetch('database.json');
-        
-        if (staticResponse.ok) {
-            updateLoadingStatus('Cargando datos locales...');
-            const data = await staticResponse.json();
-            console.log('🚀 Modo Estático Activo: Carga instantánea (0 consumo API)');
-            processData(data.user, data.repos);
-            hideLoading();
-            return; // Terminamos aquí. La API de GitHub ni se entera.
-        }
-    } catch (e) {
-        console.warn('Modo Estático no disponible, iniciando modo dinámico...');
-    }
-
-    // 2. MODO DINÁMICO (Fallback / Respaldo)
-    // Solo si no hay archivo local, usamos la lógica original (Caché + API)
     let user, repos;
-    const cached = getCachedData();
-
+    let dataSource = 'api'; // Track data source: 'cache', 'api', or 'fallback'
+    
     try {
+        // 1. INTENTAR CACHÉ DEL NAVEGADOR PRIMERO
+        const cached = getCachedData();
+
         if (cached) {
             updateLoadingStatus('Cargando desde caché...');
-            console.log('Cargando desde caché navegador...');
+            console.log('📦 Datos cargados desde caché del navegador');
+            dataSource = 'cache';
             user = cached.user;
             repos = cached.repos;
         } else {
+            // 2. CONSULTAR API DE GITHUB
             updateLoadingStatus('Consultando API GitHub...');
-            console.log('Consultando API GitHub...');
+            console.log('🌐 Consultando API de GitHub...');
             const [userRes, reposRes] = await Promise.all([
                 fetch(`https://api.github.com/users/${USERNAME}`),
                 fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`)
@@ -194,27 +206,34 @@ async function initApp() {
 
             if (userRes.status === 403 || reposRes.status === 403) throw new Error('API_LIMIT');
             if (!userRes.ok) throw new Error('Usuario no encontrado');
+            if (!reposRes.ok) throw new Error('Error al obtener repositorios');
 
             user = await userRes.json();
             repos = await reposRes.json();
             saveToCache(user, repos);
+            console.log('✅ Datos obtenidos de la API y guardados en caché');
         }
+        
         updateLoadingStatus('Preparando interfaz...');
-        processData(user, repos);
+        processData(user, repos, dataSource);
         hideLoading();
 
     } catch (error) {
-        console.error(error);
+        console.error('Error en initApp:', error);
+        
+        // 3. FALLBACK: USAR CACHÉ EXPIRADA SI ESTÁ DISPONIBLE
         const expiredData = getExpiredCache();
         if (expiredData) {
-            showToast();
+            dataSource = 'fallback';
+            showToast('Modo Caché', 'Usando datos almacenados localmente (puede estar desactualizado)', 'warning');
             updateLoadingStatus('Usando datos en caché...');
-            processData(expiredData.user, expiredData.repos);
+            console.log('⚠️ Usando caché expirada como fallback');
+            processData(expiredData.user, expiredData.repos, dataSource);
             hideLoading();
         } else {
             showError(error.message === 'API_LIMIT' 
-                ? 'Límite de API excedido. Sube un archivo database.json para solucionarlo permanentemente.' 
-                : 'Error de conexión.');
+                ? 'Límite de API excedido. Por favor, intenta de nuevo en unos minutos.' 
+                : 'Error de conexión. Por favor, verifica tu conexión a internet.');
         }
     }
 }
@@ -226,19 +245,94 @@ function updateLoadingStatus(message) {
     }
 }
 
-function processData(user, repos) {
+function processData(user, repos, dataSource = 'api') {
     allRepos = repos;
     filteredRepos = allRepos;
     renderProfile(user);
     calculateStats(allRepos);
     setupFilters(allRepos);
     renderRepos(filteredRepos);
+    
+    // Show data source indicator
+    showDataSourceIndicator(dataSource);
 }
 
-function showToast() {
+function showDataSourceIndicator(source) {
+    const messages = {
+        'cache': '📦 Datos desde caché del navegador',
+        'api': '🌐 Datos actualizados desde GitHub API',
+        'fallback': '⚠️ Usando caché expirada (sin conexión)'
+    };
+    
+    console.log(messages[source] || messages.api);
+    
+    // Show in UI
+    const indicator = document.getElementById('data-source-indicator');
+    const sourceText = document.getElementById('data-source-text');
+    const cacheAgeText = document.getElementById('cache-age-text');
+    
+    if (indicator && sourceText) {
+        const displayMessages = {
+            'cache': 'Caché del navegador',
+            'api': 'GitHub API',
+            'fallback': 'Caché expirada'
+        };
+        
+        sourceText.textContent = `Fuente: ${displayMessages[source] || displayMessages.api}`;
+        
+        const timestamp = localStorage.getItem(CACHE_KEY_TIME);
+        if (timestamp && (source === 'cache' || source === 'fallback')) {
+            const cacheAge = Math.floor((Date.now() - parseInt(timestamp)) / (60 * 1000));
+            const displayAge = cacheAge < 60 
+                ? `${cacheAge} min` 
+                : `${Math.floor(cacheAge / 60)}h ${cacheAge % 60}min`;
+            cacheAgeText.textContent = `· Última actualización: hace ${displayAge}`;
+        } else {
+            cacheAgeText.textContent = source === 'api' ? '· Recién actualizado' : '';
+        }
+        
+        indicator.classList.remove('hidden');
+    }
+}
+
+function showToast(title = 'Modo Caché', message = 'Datos almacenados localmente', type = 'info') {
     const toast = document.getElementById('toast');
+    
+    // Icon and color mappings with complete strings for Tailwind
+    const iconMap = {
+        'info': 'wifi-off',
+        'warning': 'alert-triangle',
+        'success': 'check-circle',
+        'error': 'x-circle'
+    };
+    
+    const colorClassMap = {
+        'info': 'w-5 h-5 text-yellow-400',
+        'warning': 'w-5 h-5 text-orange-400',
+        'success': 'w-5 h-5 text-green-400',
+        'error': 'w-5 h-5 text-red-400'
+    };
+    
+    const icon = iconMap[type] || iconMap.info;
+    const colorClass = colorClassMap[type] || colorClassMap.info;
+    
+    // Update toast content
+    const iconElement = toast.querySelector('[data-lucide]');
+    const titleElement = toast.querySelector('.text-sm.font-bold');
+    const messageElement = toast.querySelector('.text-xs');
+    
+    if (iconElement) {
+        iconElement.setAttribute('data-lucide', icon);
+        iconElement.className = colorClass;
+    }
+    if (titleElement) titleElement.textContent = title;
+    if (messageElement) messageElement.textContent = message;
+    
     toast.classList.remove('hidden');
     toast.classList.remove('translate-x-full');
+    
+    // Reinitialize icons
+    lucide.createIcons();
     
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
@@ -670,22 +764,34 @@ async function openRepoViewer(repo) {
 async function loadReadmeContent(repoName, branch, path) {
     const viewer = document.getElementById('code-viewer');
     try {
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${path}?ref=${branch}`);
+        const cacheKey = `readme:${repoName}:${branch}:${path}`;
+        let content;
         
-        if (res.status === 403) {
-            throw new Error('API_LIMIT');
+        // Check session cache first
+        if (sessionCache.files.has(cacheKey)) {
+            console.log('Using cached README content');
+            content = sessionCache.files.get(cacheKey);
+        } else {
+            const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${path}?ref=${branch}`);
+            
+            if (res.status === 403) {
+                throw new Error('API_LIMIT');
+            }
+            
+            if (!res.ok) {
+                throw new Error('Error de lectura');
+            }
+            
+            const data = await res.json();
+            
+            // Decodificar Base64 con TextDecoder (método correcto)
+            const binaryString = atob(data.content.replace(/\s/g, ''));
+            const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+            content = new TextDecoder().decode(bytes);
+            
+            // Cache the content
+            sessionCache.files.set(cacheKey, content);
         }
-        
-        if (!res.ok) {
-            throw new Error('Error de lectura');
-        }
-        
-        const data = await res.json();
-        
-        // Decodificar Base64 con TextDecoder (método correcto)
-        const binaryString = atob(data.content.replace(/\s/g, ''));
-        const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
-        const content = new TextDecoder().decode(bytes);
         
         // Renderizar con MARKED.js
         viewer.innerHTML = `
@@ -698,6 +804,12 @@ async function loadReadmeContent(repoName, branch, path) {
     } catch (e) {
         console.error('Error loading README:', e);
         if (e.message === 'API_LIMIT') {
+            viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
+        } else {
+            viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+        }
+    }
+}
             viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
         } else {
             viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
