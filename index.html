@@ -23,6 +23,13 @@
     <meta property="twitter:description" content="Portafolio GitHub con diseño Liquid Glass Premium - Explora proyectos open source">
     <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
     
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gmdrax Portfolio">
+    
     <title>Gmdrax | Liquid Glass Portfolio</title>
     
     <!-- Preload -->
@@ -159,9 +166,10 @@
             </div>
             
             <div class="space-y-3">
-                <p id="loading-text" class="text-white font-bold text-base tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
-                    Cargando portafolio
+                <p id="loading-text" class="text-white font-bold text-base tracking-wide">
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">Cargando portafolio</span>
                 </p>
+                <p id="loading-status" class="text-white/50 text-xs font-medium min-h-[16px]">Preparando interfaz...</p>
                 <div class="flex justify-center gap-2">
                     <span class="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce shadow-lg shadow-purple-500/50" style="animation-delay: 0s"></span>
                     <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce shadow-lg shadow-blue-500/50" style="animation-delay: 0.15s"></span>
@@ -433,6 +441,19 @@
     <!-- Initialize Icons -->
     <script>
         lucide.createIcons();
+        
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered:', registration);
+                    })
+                    .catch((error) => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
         
         // Parallax mejorado con RAF y CSS custom properties
         let rafId = null;

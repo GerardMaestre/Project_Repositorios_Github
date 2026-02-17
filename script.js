@@ -139,6 +139,8 @@ function getExpiredCache() {
 
 // --- LÓGICA PRINCIPAL BLINDADA ---
 async function initApp() {
+    updateLoadingStatus('Conectando con GitHub...');
+    
     try {
         // 1. ESTRATEGIA "ZERO-API" (Prioridad Máxima)
         // Intentamos cargar un archivo local generado previamente.
@@ -146,6 +148,7 @@ async function initApp() {
         const staticResponse = await fetch('database.json');
         
         if (staticResponse.ok) {
+            updateLoadingStatus('Cargando datos locales...');
             const data = await staticResponse.json();
             console.log('🚀 Modo Estático Activo: Carga instantánea (0 consumo API)');
             processData(data.user, data.repos);
@@ -163,10 +166,12 @@ async function initApp() {
 
     try {
         if (cached) {
+            updateLoadingStatus('Cargando desde caché...');
             console.log('Cargando desde caché navegador...');
             user = cached.user;
             repos = cached.repos;
         } else {
+            updateLoadingStatus('Consultando API GitHub...');
             console.log('Consultando API GitHub...');
             const [userRes, reposRes] = await Promise.all([
                 fetch(`https://api.github.com/users/${USERNAME}`),
@@ -180,6 +185,7 @@ async function initApp() {
             repos = await reposRes.json();
             saveToCache(user, repos);
         }
+        updateLoadingStatus('Preparando interfaz...');
         processData(user, repos);
         hideLoading();
 
@@ -188,6 +194,7 @@ async function initApp() {
         const expiredData = getExpiredCache();
         if (expiredData) {
             showToast();
+            updateLoadingStatus('Usando datos en caché...');
             processData(expiredData.user, expiredData.repos);
             hideLoading();
         } else {
@@ -195,6 +202,13 @@ async function initApp() {
                 ? 'Límite de API excedido. Sube un archivo database.json para solucionarlo permanentemente.' 
                 : 'Error de conexión.');
         }
+    }
+}
+
+function updateLoadingStatus(message) {
+    const statusElement = document.getElementById('loading-status');
+    if (statusElement) {
+        statusElement.textContent = message;
     }
 }
 
@@ -539,7 +553,7 @@ function handleFileClick(element) {
 // 4. Abre el modal y carga el árbol
 async function openRepoViewer(repo) {
     const modal = document.getElementById('modal');
-    modal.classList.remove('hidden');
+    modal.classList.remove('hidden', 'closing');
     document.body.style.overflow = 'hidden'; // Prevent body scroll
     document.getElementById('modal-title').textContent = repo.name;
 
@@ -665,11 +679,15 @@ async function loadFileContent(repoName, branch, path, element) {
 }
 
 function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-    document.body.style.overflow = ''; // Restore body scroll
+    const modal = document.getElementById('modal');
+    modal.classList.add('closing');
     
-    // Opcional: Limpiar el contenido para que al abrir otro repo se vea limpio
     setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('closing');
+        document.body.style.overflow = ''; // Restore body scroll
+        
+        // Limpiar el contenido para que al abrir otro repo se vea limpio
         document.getElementById('file-tree').innerHTML = '';
         document.getElementById('code-viewer').innerHTML = '';
     }, 300);

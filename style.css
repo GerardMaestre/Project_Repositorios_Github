@@ -811,6 +811,49 @@ button:active {
 }
 
 /* ============================================
+   MODAL ANIMATIONS
+   ============================================ */
+
+#modal {
+  transition: opacity 0.3s var(--ease-liquid);
+}
+
+#modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#modal:not(.hidden) .glass-panel {
+  animation: modalSlideIn 0.4s var(--ease-liquid);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+#modal.closing .glass-panel {
+  animation: modalSlideOut 0.3s var(--ease-liquid);
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+}
+
+/* ============================================
    EFECTOS DE TEXTO
    ============================================ */
 
