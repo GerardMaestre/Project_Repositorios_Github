@@ -26,6 +26,31 @@ const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 Minutos en milisegundos
 
+// Constantes de estilos para evitar duplicación
+const FILTER_BTN_INACTIVE = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+const FILTER_BTN_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10';
+const FILTER_BTN_ALL_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white';
+
+// Constantes de colores de lenguajes
+const LANG_COLORS = {
+    'JavaScript': '#facc15',
+    'TypeScript': '#3b82f6',
+    'Python': '#22c55e',
+    'HTML': '#f97316',
+    'CSS': '#3b82f6',
+    'Vue': '#42b883',
+    'React': '#61dafb',
+    'Java': '#b07219',
+    'C++': '#f34b7d',
+    'C#': '#178600',
+    'Go': '#00ADD8',
+    'Rust': '#dea584',
+    'PHP': '#4F5D95',
+    'Ruby': '#701516',
+    'Swift': '#ffac45',
+    'Kotlin': '#A97BFF'
+};
+
 // --- VARIABLES DE ESTADO ---
 let allRepos = [];
 let filteredRepos = [];
@@ -34,7 +59,10 @@ let visibleCount = ITEMS_PER_PAGE;
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('year').textContent = new Date().getFullYear();
+    const yearElement = document.getElementById('year');
+    if (yearElement) {
+        yearElement.textContent = new Date().getFullYear();
+    }
     initApp();
 
     // Listeners
@@ -46,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-input').addEventListener('input', debounce((e) => {
         handleSearch(e.target.value);
     }, 300));
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleGlobalKeyboard);
 });
 
 // --- GESTIÓN DE CACHÉ ---
@@ -158,6 +189,14 @@ function showToast() {
     const toast = document.getElementById('toast');
     toast.classList.remove('hidden');
     toast.classList.remove('translate-x-full');
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 500);
+    }, 5000);
 }
 
 function hideLoading() {
@@ -180,28 +219,15 @@ function showError(msg) {
 }
 
 function renderProfile(user) {
-    document.getElementById('avatar').src = user.avatar_url;
+    const avatarImg = document.getElementById('avatar');
+    avatarImg.src = user.avatar_url;
+    avatarImg.alt = `${user.name || user.login} - Avatar`;
+    
     document.getElementById('name').textContent = user.name || USERNAME;
     document.getElementById('username').textContent = `@${user.login}`;
     document.getElementById('followers').textContent = user.followers;
     document.getElementById('following').textContent = user.following;
     document.getElementById('github-link').href = user.html_url;
-    let clicks = 0;
-    const avatar = document.getElementById('avatar');
-    
-    avatar.style.cursor = 'pointer'; // Para saber que es clicable
-    avatar.onclick = () => {
-        clicks++;
-        if (clicks === 5) {
-            // Activamos el modo admin
-            localStorage.setItem('GMDRAX_ADMIN', 'true');
-            alert('🔓 MODO DUEÑO ACTIVADO\nAhora puedes ver los botones de edición.');
-            
-            // Recargamos para mostrar los botones
-            location.reload(); 
-        }
-    };
-
 }
 
 function calculateStats(repos) {
@@ -220,9 +246,7 @@ function calculateStats(repos) {
 }
 
 // --- RENDERIZADO ---
-// --- RENDERIZADO ---
 function renderRepos(repos, append = false) {
-    const isAdmin = localStorage.getItem('GMDRAX_ADMIN') === 'true';
     const grid = document.getElementById('repos-grid');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const showingCountLabel = document.getElementById('showing-count');
@@ -247,19 +271,23 @@ function renderRepos(repos, append = false) {
         const card = document.createElement('div');
         card.className = 'repo-card p-5 flex flex-col h-full cursor-pointer group';
         
-        const langColors = {
-            'JavaScript': '#facc15', 'TypeScript': '#3b82f6', 'Python': '#22c55e',
-            'HTML': '#f97316', 'CSS': '#3b82f6', 'Vue': '#42b883', 'React': '#61dafb'
-        };
-        const langColor = langColors[repo.language] || '#ffffff';
+        const langColor = LANG_COLORS[repo.language] || '#ffffff';
+        
+        // Escapar datos para prevenir XSS
+        const repoName = escapeHtml(repo.name);
+        const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';
+        const repoCloneUrl = sanitizeUrl(repo.clone_url);
+        const repoHtmlUrl = sanitizeUrl(repo.html_url);
+        const editorUrl = repoHtmlUrl.replace('github.com', 'github.dev');
         
         // Configuración de URLs
-        const editorUrl = repo.html_url.replace('github.com', 'github.dev');
         let hasWeb = false;
         let webUrl = '#';
         if (repo.homepage && repo.homepage.trim() !== "") {
-            hasWeb = true;
-            webUrl = repo.homepage.startsWith('http') ? repo.homepage : 'https://' + repo.homepage;
+            const homepage = repo.homepage.trim();
+            webUrl = homepage.startsWith('http') ? homepage : 'https://' + homepage;
+            webUrl = sanitizeUrl(webUrl);
+            hasWeb = webUrl !== '#';
         }
 
         // Generador de Badges (Limpio)
@@ -277,8 +305,9 @@ function renderRepos(repos, append = false) {
                 'node': 'node.js-6DA55F?style=flat&logo=node.js&logoColor=white',
                 'nextjs': 'Next-black?style=flat&logo=next.js&logoColor=white'
             };
-            const url = logos[topic.toLowerCase()] || `${topic}-blue?style=flat&logo=github`;
-            return `<img src="https://img.shields.io/badge/${url}" alt="${topic}" class="h-5 tech-badge rounded-sm">`;
+            const safeTopic = encodeURIComponent(topic);
+            const url = logos[topic.toLowerCase()] || `${safeTopic}-blue?style=flat&logo=github`;
+            return `<img src="https://img.shields.io/badge/${url}" alt="${escapeHtml(topic)}" class="h-5 tech-badge rounded-sm" loading="lazy">`;
         };
 
         const badgesHtml = repo.topics && repo.topics.length > 0
@@ -294,30 +323,13 @@ function renderRepos(repos, append = false) {
                     <i data-lucide="folder" class="w-5 h-5"></i>
                 </div>
                 
-                <div class="flex gap-2">
-                    ${isAdmin ? `
-                    <a href="${editorUrl}" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       onclick="event.stopPropagation()" 
-                       class="group/edit p-1.5 bg-blue-500/10 hover:bg-blue-500 rounded-md text-blue-400 hover:text-white border border-blue-500/50 transition-all z-10 flex items-center gap-1" 
-                       title="Editar ahora (Solo Tú)">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                    </a>` : ''}
-
-                    <button 
-                        onclick="event.stopPropagation(); copyCloneCommand('${repo.clone_url}', this)" 
-                        class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-primary transition-colors z-10" 
-                        title="Copiar 'git clone'">
-                        <i data-lucide="clipboard-copy" class="w-4 h-4"></i>
-                    </button>
-
+                <div class="flex gap-2" id="actions-${repo.id}">
                     ${hasWeb ? `
-                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/50 text-primary rounded-md text-[10px] font-bold uppercase hover:bg-primary hover:text-black transition-all z-10" title="Ver Proyecto Online">
+                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/50 text-primary rounded-md text-[10px] font-bold uppercase hover:bg-primary hover:text-black transition-all z-10" title="Ver Proyecto Online">
                         <i data-lucide="globe" class="w-3 h-3"></i> WEB
                     </a>` : ''}
                     
-                    <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
+                    <a href="${repoHtmlUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
                         <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
                 </div>
@@ -325,12 +337,12 @@ function renderRepos(repos, append = false) {
             
             ${badgesHtml} 
             
-            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${repo.name}</h3>
-            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${repo.description || 'Sin descripción disponible.'}</p>
+            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${repoName}</h3>
+            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${repoDesc}</p>
             
             <div class="flex items-center justify-between text-[10px] font-mono uppercase font-bold text-gray-500 pt-3 border-t border-white/5 w-full">
                 <div class="flex items-center gap-2">
-                    ${repo.language ? `<span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${repo.language}` : ''}
+                    ${repo.language ? `<span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}
                 </div>
                 <div class="flex gap-3 text-gray-400">
                     <span class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> ${repo.stargazers_count}</span>
@@ -338,6 +350,18 @@ function renderRepos(repos, append = false) {
                 </div>
             </div>
         `;
+        
+        // Add clone button with event listener (secure approach)
+        const actionsDiv = card.querySelector(`#actions-${repo.id}`);
+        const cloneBtn = document.createElement('button');
+        cloneBtn.className = 'p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-primary transition-colors z-10';
+        cloneBtn.title = "Copiar 'git clone'";
+        cloneBtn.innerHTML = '<i data-lucide="clipboard-copy" class="w-4 h-4"></i>';
+        cloneBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyCloneCommand(repoCloneUrl, cloneBtn);
+        });
+        actionsDiv.insertBefore(cloneBtn, actionsDiv.firstChild);
         
         card.onclick = (e) => {
             if(!e.target.closest('a') && !e.target.closest('button')) openRepoViewer(repo);
@@ -360,11 +384,11 @@ function renderRepos(repos, append = false) {
 function setupFilters(repos) {
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
     const container = document.getElementById('filter-container');
-    container.innerHTML = '<button class="filter-btn active bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white" data-filter="all" onclick="filterByLang(\'all\', this)">Todos</button>';
+    container.innerHTML = `<button class="${FILTER_BTN_ALL_ACTIVE}" data-filter="all" onclick="filterByLang('all', this)">Todos</button>`;
 
     languages.forEach(lang => {
         const btn = document.createElement('button');
-        btn.className = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+        btn.className = FILTER_BTN_INACTIVE;
         btn.textContent = lang;
         btn.onclick = () => filterByLang(lang, btn);
         container.appendChild(btn);
@@ -375,13 +399,13 @@ function filterByLang(lang, btnElement) {
     currentLangFilter = currentLangFilter === lang ? 'all' : lang;
     
     document.querySelectorAll('#filter-container button').forEach(b => {
-        b.className = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+        b.className = FILTER_BTN_INACTIVE;
     });
 
     if (currentLangFilter !== 'all') {
-        btnElement.className = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10';
+        btnElement.className = FILTER_BTN_ACTIVE;
     } else {
-        document.querySelector('[data-filter="all"]').className = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white';
+        document.querySelector('[data-filter="all"]').className = FILTER_BTN_ALL_ACTIVE;
     }
 
     handleSearch(document.getElementById('search-input').value);
@@ -469,9 +493,9 @@ function handleFileClick(element) {
 
 // 4. Abre el modal y carga el árbol
 async function openRepoViewer(repo) {
-    // ... (Tu código de apertura de modal) ...
     const modal = document.getElementById('modal');
     modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
     document.getElementById('modal-title').textContent = repo.name;
 
     const fileTree = document.getElementById('file-tree');
@@ -518,10 +542,21 @@ async function loadReadmeContent(repoName, branch, path) {
     const viewer = document.getElementById('code-viewer');
     try {
         const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${path}?ref=${branch}`);
+        
+        if (res.status === 403) {
+            throw new Error('API_LIMIT');
+        }
+        
+        if (!res.ok) {
+            throw new Error('Error de lectura');
+        }
+        
         const data = await res.json();
         
-        // Decodificar Base64 (soporta UTF-8)
-        const content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+        // Decodificar Base64 con TextDecoder (método correcto)
+        const binaryString = atob(data.content.replace(/\s/g, ''));
+        const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+        const content = new TextDecoder().decode(bytes);
         
         // Renderizar con MARKED.js
         viewer.innerHTML = `
@@ -532,7 +567,12 @@ async function loadReadmeContent(repoName, branch, path) {
             </div>`;
             
     } catch (e) {
-        viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+        console.error('Error loading README:', e);
+        if (e.message === 'API_LIMIT') {
+            viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
+        } else {
+            viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+        }
     }
 }
 
@@ -581,6 +621,7 @@ async function loadFileContent(repoName, branch, path, element) {
 
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
+    document.body.style.overflow = ''; // Restore body scroll
     
     // Opcional: Limpiar el contenido para que al abrir otro repo se vea limpio
     setTimeout(() => {
@@ -609,7 +650,8 @@ async function copyCloneCommand(url, btn) {
         
     } catch (err) {
         console.error('Error al copiar:', err);
-        alert('No se pudo copiar al portapapeles');
+        // Fallback: mostrar en alert
+        alert(`Copia este comando:\n${command}`);
     }
 }
 
@@ -620,4 +662,31 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(context, args), wait);
     };
+}
+
+// --- UTILIDADES DE SEGURIDAD ---
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function sanitizeUrl(url) {
+    if (!url) return '#';
+    // Ensure URL is safe (starts with http:// or https://)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    return '#';
+}
+
+// --- KEYBOARD NAVIGATION ---
+function handleGlobalKeyboard(e) {
+    const modal = document.getElementById('modal');
+    if (!modal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    }
 }
