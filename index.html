@@ -327,13 +327,31 @@
         <div class="sticky top-4 z-40 mb-10">
             <div class="glass-panel p-5 shadow-2xl">
                 <div class="flex flex-col gap-5">
-                    <!-- Search Input -->
-                    <div class="relative flex-1 group">
-                        <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 w-5 h-5 pointer-events-none group-focus-within:text-purple-400 transition-colors"></i>
-                        <input type="text" 
-                               id="search-input" 
-                               placeholder="Buscar proyectos..." 
-                               class="w-full pl-14 pr-5 py-4 text-sm font-medium placeholder:text-white/40 transition-all">
+                    <!-- Search Input with Refresh Button -->
+                    <div class="flex gap-3 items-center">
+                        <div class="relative flex-1 group">
+                            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 w-5 h-5 pointer-events-none group-focus-within:text-purple-400 transition-colors"></i>
+                            <input type="text" 
+                                   id="search-input" 
+                                   placeholder="Buscar proyectos..." 
+                                   class="w-full pl-14 pr-5 py-4 text-sm font-medium placeholder:text-white/40 transition-all">
+                        </div>
+                        
+                        <!-- Refresh Button -->
+                        <button id="refresh-data-btn" 
+                                class="flex-shrink-0 flex items-center gap-2 px-4 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-xs rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                                title="Refrescar datos desde GitHub API"
+                                onclick="forceRefreshData()">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Refrescar</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Data Source Indicator -->
+                    <div id="data-source-indicator" class="flex items-center gap-2 text-xs text-white/50 font-mono hidden">
+                        <i data-lucide="info" class="w-3 h-3"></i>
+                        <span id="data-source-text">Fuente de datos: API</span>
+                        <span id="cache-age-text"></span>
                     </div>
                     
                     <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
