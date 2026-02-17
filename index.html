@@ -38,13 +38,33 @@
     <link rel="preconnect" href="https://api.github.com">
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Archivo Black', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        primary: '#00f2ea',
+                        secondary: '#ff0050',
+                        darkbg: '#050510',
+                        cardbg: '#0a0a15',
+                    }
+                }
+            }
+        }
+    </script>
     
-    <!-- Icons - Fixed version -->
-    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <!-- Icons - Lucide -->
+    <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
     
     <!-- Markdown - Fixed version -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
@@ -391,7 +411,7 @@
         <!-- Load More -->
         <div class="text-center space-y-5 mb-20">
             <button id="load-more-btn" 
-                    class="hidden group">
+                    class="hidden group px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-sm rounded-2xl transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 active:scale-95">
                 <span class="flex items-center gap-3">
                     <i data-lucide="chevrons-down" class="w-5 h-5 group-hover:animate-bounce"></i>
                     Cargar más proyectos
@@ -469,7 +489,7 @@
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('./sw.js')
                     .then((registration) => {
                         console.log('SW registered:', registration);
                     })

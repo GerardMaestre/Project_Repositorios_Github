@@ -1,23 +1,3 @@
-// --- CONFIGURACIÓN TAILWIND ---
-tailwind.config = {
-    darkMode: 'class',
-    theme: {
-        extend: {
-            fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-                display: ['Archivo Black', 'sans-serif'],
-                mono: ['JetBrains Mono', 'monospace'],
-            },
-            colors: {
-                primary: '#00f2ea',
-                secondary: '#ff0050',
-                darkbg: '#050510',
-                cardbg: '#0a0a15',
-            }
-        }
-    }
-}
-
 // --- CONSTANTES ---
 const USERNAME = 'Gmdrax';
 const ITEMS_PER_PAGE = 9;
@@ -237,8 +217,13 @@ async function initApp() {
         const expiredData = getExpiredCache();
         if (expiredData) {
             showToast('Modo Offline', 'Usando datos antiguos guardados', 'warning');
-            processData(expiredData.user, expiredData.repos, 'fallback');
-            hideLoading();
+            try {
+                processData(expiredData.user, expiredData.repos, 'fallback');
+                hideLoading();
+            } catch (e2) {
+                console.error('Error en fallback processData:', e2);
+                showError('Error al procesar datos: ' + e2.message);
+            }
         } else {
             showError('No se pudieron cargar los datos. Verifica tu conexión o espera unos minutos.');
         }
@@ -817,12 +802,7 @@ async function loadReadmeContent(repoName, branch, path) {
         }
     }
 }
-            viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
-        } else {
-            viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
-        }
-    }
-}
+
 
 // 5. Carga el contenido del archivo (Modificado para la nueva estructura)
 async function loadFileContent(repoName, branch, path, element) {
