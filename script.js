@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 9;
 const CACHE_KEY_USER = `gh_user_${USERNAME}`;
 const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
-const CACHE_DURATION = 60 * 60 * 1000; // 60 Minutos en milisegundos
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutos en milisegundos
 
 // Constantes de estilos para evitar duplicación
 const FILTER_BTN_INACTIVE = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
@@ -297,6 +297,8 @@ function showDataSourceIndicator(source) {
 
 function showToast(title = 'Modo Caché', message = 'Datos almacenados localmente', type = 'info') {
     const toast = document.getElementById('toast');
+    
+    // Icon and color mappings with complete strings for Tailwind
     const iconMap = {
         'info': 'wifi-off',
         'warning': 'alert-triangle',
@@ -304,15 +306,15 @@ function showToast(title = 'Modo Caché', message = 'Datos almacenados localment
         'error': 'x-circle'
     };
     
-    const colorMap = {
-        'info': 'yellow',
-        'warning': 'orange',
-        'success': 'green',
-        'error': 'red'
+    const colorClassMap = {
+        'info': 'w-5 h-5 text-yellow-400',
+        'warning': 'w-5 h-5 text-orange-400',
+        'success': 'w-5 h-5 text-green-400',
+        'error': 'w-5 h-5 text-red-400'
     };
     
     const icon = iconMap[type] || iconMap.info;
-    const color = colorMap[type] || colorMap.info;
+    const colorClass = colorClassMap[type] || colorClassMap.info;
     
     // Update toast content
     const iconElement = toast.querySelector('[data-lucide]');
@@ -321,7 +323,7 @@ function showToast(title = 'Modo Caché', message = 'Datos almacenados localment
     
     if (iconElement) {
         iconElement.setAttribute('data-lucide', icon);
-        iconElement.className = `w-5 h-5 text-${color}-400`;
+        iconElement.className = colorClass;
     }
     if (titleElement) titleElement.textContent = title;
     if (messageElement) messageElement.textContent = message;
