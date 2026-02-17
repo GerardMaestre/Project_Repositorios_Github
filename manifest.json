@@ -1,12 +1,10 @@
 {
   "name": "Gmdrax - Liquid Glass Portfolio",
   "short_name": "Gmdrax Portfolio",
-  "description": "Portafolio GitHub con diseño Liquid Glass Premium",
-  "start_url": "/",
+  "start_url": "./index.html", 
   "display": "standalone",
   "background_color": "#0f0a1f",
   "theme_color": "#8b5cf6",
-  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://avatars.githubusercontent.com/u/232252917?v=4",
@@ -19,14 +17,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "categories": ["portfolio", "developer", "technology"],
-  "shortcuts": [
-    {
-      "name": "Ver Repositorios",
-      "url": "/#repos",
-      "description": "Ir directamente a la sección de repositorios"
     }
   ]
 }
