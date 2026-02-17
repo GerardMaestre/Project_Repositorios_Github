@@ -1,11 +1,15 @@
 // Service Worker para PWA - Liquid Glass Portfolio
-const CACHE_NAME = 'gmdrax-portfolio-v1';
+// CAMBIO 1: Cambiamos el nombre de la versión para obligar al navegador a actualizar
+const CACHE_NAME = 'gmdrax-portfolio-v2';
+
+// CAMBIO 2: Rutas relativas (./) y añadimos database.json
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './database.json'
 ];
 
 // Install event - cache resources
@@ -29,6 +33,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // Borra cualquier caché que no sea la actual (v2)
           if (cacheName !== CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
@@ -42,15 +47,19 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  // Solo interceptamos peticiones HTTP/HTTPS (evitamos chrome-extension://, etc.)
+  if (!event.request.url.startsWith('http')) {
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response
+        // Clonamos la respuesta válida
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        
         const responseToCache = response.clone();
         
         caches.open(CACHE_NAME)
@@ -61,10 +70,14 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails, try cache
+        // Si no hay red, buscamos en caché
         return caches.match(event.request)
           .then((response) => {
-            return response || new Response('Offline - No cache available', {
+            if (response) {
+              return response;
+            }
+            // Si no está en caché y es navegación, podríamos devolver una página offline.html
+            return new Response('Offline - No cache available', {
               status: 503,
               statusText: 'Service Unavailable'
             });
