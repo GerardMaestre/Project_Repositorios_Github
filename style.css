@@ -73,6 +73,78 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light theme */
+html.light body {
+  background: #f0f4f8;
+  color: #1a202c;
+}
+
+html.light .bg-fixed-layer {
+  background: 
+    radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 55%),
+    radial-gradient(circle at 30% 60%, rgba(236, 72, 153, 0.08) 0%, transparent 40%),
+    linear-gradient(135deg, #ffffff 0%, #f0f4f8 50%, #e2e8f0 100%);
+}
+
+html.light body::before,
+html.light body::after {
+  opacity: 0.3;
+}
+
+html.light .glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(99, 102, 241, 0.1),
+    0 2px 8px 0 rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .repo-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(249, 250, 251, 0.9) 50%,
+    rgba(243, 244, 246, 0.85) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.15);
+  color: #1a202c;
+}
+
+html.light .repo-card h3 {
+  background: linear-gradient(
+    135deg,
+    #1a202c 0%,
+    #4a5568 50%,
+    #2d3748 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+html.light .text-white {
+  color: #1a202c !important;
+}
+
+html.light .text-white\/70,
+html.light .text-white\/60,
+html.light .text-white\/50,
+html.light .text-white\/40 {
+  color: #4a5568 !important;
+}
+
+html.light .text-gray-400,
+html.light .text-gray-500 {
+  color: #718096 !important;
 }
 
 /* CORRECCIÓN DE SUPERPOSICIÓN:
@@ -97,8 +169,8 @@ main {
     radial-gradient(circle at 30% 60%, rgba(236, 72, 153, 0.2) 0%, transparent 40%),
     linear-gradient(135deg, #1a0b2e 0%, #0f0a1f 50%, #1a0b2e 100%);
   
-  /* Animación desactivada */
-  /* animation: liquidFlow 15s ease-in-out infinite; */
+  will-change: transform;
+  animation: liquidFlow 15s ease-in-out infinite;
 }
 
 @keyframes liquidFlow {
@@ -113,7 +185,7 @@ main {
   }
 }
 
-/* Partículas Flotantes (ESTÁTICAS) */
+/* Partículas Flotantes */
 body::before {
   content: "";
   position: fixed;
@@ -132,8 +204,8 @@ body::before {
   opacity: 0.6;
   pointer-events: none;
   
-  /* Animación desactivada */
-  /* animation: particlesFloat 20s linear infinite; */
+  will-change: transform;
+  animation: particlesFloat 20s linear infinite;
 }
 
 @keyframes particlesFloat {
@@ -145,7 +217,7 @@ body::before {
   }
 }
 
-/* Glow Dinámico Superior (ESTÁTICO) */
+/* Glow Dinámico Superior */
 body::after {
   content: "";
   position: fixed;
@@ -165,8 +237,8 @@ body::after {
   z-index: -1;
   pointer-events: none;
 
-  /* Animación desactivada */
-  /* animation: glowPulse 8s ease-in-out infinite; */
+  will-change: transform, opacity;
+  animation: glowPulse 8s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
@@ -725,6 +797,13 @@ button:active {
   margin-bottom: 3rem;
 }
 
+/* Tablet - 2 columns */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .repos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .repos-grid {
     grid-template-columns: 1fr;
@@ -734,6 +813,36 @@ button:active {
   :root {
     --blur-strong: 30px;
     --blur-medium: 20px;
+  }
+  
+  /* Make file tree collapsible on mobile */
+  #file-tree {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  /* Modal adjustments for mobile */
+  #modal .glass-panel {
+    flex-direction: column;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem !important;
+  }
+  
+  /* Stack filters on mobile */
+  #filter-container {
+    flex-wrap: wrap;
+  }
+  
+  /* Hide theme toggle on very small screens */
+  @media (max-width: 480px) {
+    #theme-toggle {
+      bottom: 24px;
+      left: 24px;
+      width: 48px;
+      height: 48px;
+    }
   }
 }
 
@@ -771,20 +880,87 @@ button:active {
   animation: fadeInLiquid 0.8s var(--ease-liquid);
 }
 
-.repo-card {
-  animation: fadeInLiquid 0.6s var(--ease-liquid);
-  animation-fill-mode: both;
+/* Intersection Observer animations */
+.fade-in-hidden {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: opacity 0.6s var(--ease-liquid), transform 0.6s var(--ease-liquid);
 }
 
-.repo-card:nth-child(1) { animation-delay: 0.1s; }
-.repo-card:nth-child(2) { animation-delay: 0.15s; }
-.repo-card:nth-child(3) { animation-delay: 0.2s; }
-.repo-card:nth-child(4) { animation-delay: 0.25s; }
-.repo-card:nth-child(5) { animation-delay: 0.3s; }
-.repo-card:nth-child(6) { animation-delay: 0.35s; }
-.repo-card:nth-child(7) { animation-delay: 0.4s; }
-.repo-card:nth-child(8) { animation-delay: 0.45s; }
-.repo-card:nth-child(9) { animation-delay: 0.5s; }
+.fade-in-hidden.animate-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Stagger effect for cards */
+.repo-card:nth-child(1).animate-in { transition-delay: 0.05s; }
+.repo-card:nth-child(2).animate-in { transition-delay: 0.1s; }
+.repo-card:nth-child(3).animate-in { transition-delay: 0.15s; }
+.repo-card:nth-child(4).animate-in { transition-delay: 0.05s; }
+.repo-card:nth-child(5).animate-in { transition-delay: 0.1s; }
+.repo-card:nth-child(6).animate-in { transition-delay: 0.15s; }
+.repo-card:nth-child(7).animate-in { transition-delay: 0.05s; }
+.repo-card:nth-child(8).animate-in { transition-delay: 0.1s; }
+.repo-card:nth-child(9).animate-in { transition-delay: 0.15s; }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .fade-in-hidden {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================
+   MODAL ANIMATIONS
+   ============================================ */
+
+#modal {
+  transition: opacity 0.3s var(--ease-liquid);
+}
+
+#modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#modal:not(.hidden) .glass-panel {
+  animation: modalSlideIn 0.4s var(--ease-liquid);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+#modal.closing .glass-panel {
+  animation: modalSlideOut 0.3s var(--ease-liquid);
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+}
 
 /* ============================================
    EFECTOS DE TEXTO
@@ -818,6 +994,43 @@ button:active {
   50% {
     text-shadow: 0 0 60px rgba(139, 92, 246, 0.6);
   }
+}
+
+/* ============================================
+   ACCESSIBILITY - FOCUS STATES
+   ============================================ */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+.repo-card:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   SORT BUTTONS
+   ============================================ */
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+}
+
+.sort-btn.active-sort {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.3));
+  border-color: rgba(139, 92, 246, 0.6);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 /* ============================================
@@ -911,5 +1124,52 @@ button:active {
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   PRINT STYLESHEET
+   ============================================ */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .bg-fixed-layer,
+  .floating-bubbles,
+  body::before,
+  body::after,
+  #loading,
+  #toast,
+  #modal,
+  button,
+  .sticky {
+    display: none !important;
+  }
+  
+  .glass-panel {
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+  
+  .repo-card {
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: none;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+  
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
   }
 }

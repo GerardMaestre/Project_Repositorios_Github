@@ -4,8 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Portafolio GitHub con diseño Liquid Glass Premium">
+    <meta name="description" content="Portafolio GitHub con diseño Liquid Glass Premium - Explora proyectos open source con una interfaz futurista inspirada en Apple">
     <meta name="theme-color" content="#0f0a1f">
+    <meta name="author" content="Gmdrax">
+    <meta name="keywords" content="portfolio, github, glassmorphism, web development, open source">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gmdrax.github.io/Project_Repositorios_Github/">
+    <meta property="og:title" content="Gmdrax | Liquid Glass Portfolio">
+    <meta property="og:description" content="Portafolio GitHub con diseño Liquid Glass Premium - Explora proyectos open source con una interfaz futurista">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://gmdrax.github.io/Project_Repositorios_Github/">
+    <meta property="twitter:title" content="Gmdrax | Liquid Glass Portfolio">
+    <meta property="twitter:description" content="Portafolio GitHub con diseño Liquid Glass Premium - Explora proyectos open source">
+    <meta property="twitter:image" content="https://avatars.githubusercontent.com/u/232252917?v=4">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gmdrax Portfolio">
+    
     <title>Gmdrax | Liquid Glass Portfolio</title>
     
     <!-- Preload -->
@@ -19,11 +43,11 @@
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Icons - Fixed version -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
     
-    <!-- Markdown -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Markdown - Fixed version -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
@@ -98,19 +122,19 @@
         
         @keyframes float {
             0%, 100% {
-                transform: translate(0, 0) scale(1);
+                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(0, 0) scale(1);
                 opacity: 0.6;
             }
             25% {
-                transform: translate(20px, -30px) scale(1.1);
+                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(20px, -30px) scale(1.1);
                 opacity: 0.8;
             }
             50% {
-                transform: translate(-10px, -60px) scale(0.9);
+                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(-10px, -60px) scale(0.9);
                 opacity: 0.5;
             }
             75% {
-                transform: translate(30px, -40px) scale(1.05);
+                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(30px, -40px) scale(1.05);
                 opacity: 0.7;
             }
         }
@@ -142,9 +166,10 @@
             </div>
             
             <div class="space-y-3">
-                <p id="loading-text" class="text-white font-bold text-base tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
-                    Cargando portafolio
+                <p id="loading-text" class="text-white font-bold text-base tracking-wide">
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">Cargando portafolio</span>
                 </p>
+                <p id="loading-status" class="text-white/50 text-xs font-medium min-h-[16px]">Preparando interfaz...</p>
                 <div class="flex justify-center gap-2">
                     <span class="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce shadow-lg shadow-purple-500/50" style="animation-delay: 0s"></span>
                     <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce shadow-lg shadow-blue-500/50" style="animation-delay: 0.15s"></span>
@@ -172,6 +197,17 @@
         </div>
     </div>
 
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-2xl shadow-purple-500/50 opacity-0 pointer-events-none transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center group" aria-label="Volver arriba">
+        <i data-lucide="arrow-up" class="w-6 h-6 group-hover:animate-bounce"></i>
+    </button>
+
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" class="fixed bottom-8 left-8 z-50 w-14 h-14 rounded-full glass-panel text-white shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center group" aria-label="Cambiar tema">
+        <i data-lucide="moon" class="w-6 h-6 dark-icon"></i>
+        <i data-lucide="sun" class="w-6 h-6 light-icon hidden"></i>
+    </button>
+
     <!-- Main Content -->
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl opacity-0 transition-opacity duration-1000" id="main-content" style="will-change: opacity">
         
@@ -184,7 +220,7 @@
                     <!-- Avatar Liquid -->
                     <div class="relative inline-block group">
                         <div class="w-36 h-36 mx-auto rounded-full overflow-hidden ring-4 ring-white/20 ring-offset-8 ring-offset-transparent shadow-2xl transition-all duration-500 group-hover:ring-white/30 group-hover:ring-offset-purple-500/20" style="box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4);">
-                            <img id="avatar" src="" alt="Avatar" loading="lazy" class="w-full h-full object-cover bg-gradient-to-br from-purple-900 to-blue-900 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-3">
+                            <img id="avatar" src="" alt="Avatar de usuario" loading="lazy" class="w-full h-full object-cover bg-gradient-to-br from-purple-900 to-blue-900 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-3">
                         </div>
                         <!-- Status Badge -->
                         <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 border-4 border-[#0f0a1f] rounded-full flex items-center justify-center shadow-lg shadow-green-500/50 animate-pulse">
@@ -290,7 +326,7 @@
         <!-- Search Bar -->
         <div class="sticky top-4 z-40 mb-10">
             <div class="glass-panel p-5 shadow-2xl">
-                <div class="flex flex-col lg:flex-row gap-5 items-stretch lg:items-center">
+                <div class="flex flex-col gap-5">
                     <!-- Search Input -->
                     <div class="relative flex-1 group">
                         <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 w-5 h-5 pointer-events-none group-focus-within:text-purple-400 transition-colors"></i>
@@ -300,11 +336,30 @@
                                class="w-full pl-14 pr-5 py-4 text-sm font-medium placeholder:text-white/40 transition-all">
                     </div>
                     
-                    <!-- Filters -->
-                    <div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide" id="filter-container">
-                        <button class="filter-pill active" data-filter="all" onclick="filterByLang('all', this)">
-                            Todos
-                        </button>
+                    <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                        <!-- Sort Buttons -->
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="text-xs font-bold text-white/50 uppercase tracking-wider self-center mr-2">Ordenar:</span>
+                            <button class="sort-btn active-sort text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="updated" onclick="applySorting('updated')">
+                                <i data-lucide="clock" class="w-3 h-3 inline"></i> Recientes
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="stars" onclick="applySorting('stars')">
+                                <i data-lucide="star" class="w-3 h-3 inline"></i> Estrellas
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="forks" onclick="applySorting('forks')">
+                                <i data-lucide="git-fork" class="w-3 h-3 inline"></i> Forks
+                            </button>
+                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="name" onclick="applySorting('name')">
+                                <i data-lucide="arrow-down-a-z" class="w-3 h-3 inline"></i> A-Z
+                            </button>
+                        </div>
+                        
+                        <!-- Filters -->
+                        <div class="flex gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide flex-1" id="filter-container">
+                            <button class="filter-pill active" data-filter="all" onclick="filterByLang('all', this)">
+                                Todos
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -393,21 +448,50 @@
     <script>
         lucide.createIcons();
         
-        // Parallax para burbujas (opcional)
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered:', registration);
+                    })
+                    .catch((error) => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+        
+        // Parallax mejorado con RAF y CSS custom properties
+        let rafId = null;
+        let mouseX = 0;
+        let mouseY = 0;
+        
         document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (!rafId) {
+                rafId = requestAnimationFrame(updateParallax);
+            }
+        });
+        
+        function updateParallax() {
             const bubbles = document.querySelectorAll('.bubble');
-            const { clientX, clientY } = e;
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             
             bubbles.forEach((bubble, index) => {
                 const speed = (index + 1) * 0.02;
-                const x = (clientX - centerX) * speed;
-                const y = (clientY - centerY) * speed;
+                const x = (mouseX - centerX) * speed;
+                const y = (mouseY - centerY) * speed;
                 
-                bubble.style.transform = `translate(${x}px, ${y}px)`;
+                // Use CSS custom properties to preserve the animation
+                bubble.style.setProperty('--parallax-x', `${x}px`);
+                bubble.style.setProperty('--parallax-y', `${y}px`);
             });
-        });
+            
+            rafId = null;
+        }
     </script>
 
 </body>

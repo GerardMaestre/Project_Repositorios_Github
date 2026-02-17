@@ -26,15 +26,54 @@ const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 Minutos en milisegundos
 
+// Constantes de estilos para evitar duplicación
+const FILTER_BTN_INACTIVE = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+const FILTER_BTN_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10';
+const FILTER_BTN_ALL_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white';
+
+// Constantes de colores de lenguajes
+const LANG_COLORS = {
+    'JavaScript': '#facc15',
+    'TypeScript': '#3b82f6',
+    'Python': '#22c55e',
+    'HTML': '#f97316',
+    'CSS': '#3b82f6',
+    'Vue': '#42b883',
+    'React': '#61dafb',
+    'Java': '#b07219',
+    'C++': '#f34b7d',
+    'C#': '#178600',
+    'Go': '#00ADD8',
+    'Rust': '#dea584',
+    'PHP': '#4F5D95',
+    'Ruby': '#701516',
+    'Swift': '#ffac45',
+    'Kotlin': '#A97BFF'
+};
+
 // --- VARIABLES DE ESTADO ---
 let allRepos = [];
 let filteredRepos = [];
 let currentLangFilter = 'all';
 let visibleCount = ITEMS_PER_PAGE;
+let currentSort = 'updated'; // 'updated', 'stars', 'forks', 'name'
+
+// Session cache for file tree and file content
+const sessionCache = {
+    trees: new Map(),
+    files: new Map()
+};
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('year').textContent = new Date().getFullYear();
+    const yearElement = document.getElementById('year');
+    if (yearElement) {
+        yearElement.textContent = new Date().getFullYear();
+    }
+    
+    // Initialize theme
+    initTheme();
+    
     initApp();
 
     // Listeners
@@ -46,6 +85,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-input').addEventListener('input', debounce((e) => {
         handleSearch(e.target.value);
     }, 300));
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleGlobalKeyboard);
+    
+    // Scroll to top button
+    const scrollBtn = document.getElementById('scroll-to-top');
+    scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
+    // Show/hide scroll to top button with debounce
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            if (window.scrollY > 300) {
+                scrollBtn.style.opacity = '1';
+                scrollBtn.style.pointerEvents = 'auto';
+            } else {
+                scrollBtn.style.opacity = '0';
+                scrollBtn.style.pointerEvents = 'none';
+            }
+        }, 100);
+    });
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', toggleTheme);
 });
 
 // --- GESTIÓN DE CACHÉ ---
@@ -86,6 +153,8 @@ function getExpiredCache() {
 
 // --- LÓGICA PRINCIPAL BLINDADA ---
 async function initApp() {
+    updateLoadingStatus('Conectando con GitHub...');
+    
     try {
         // 1. ESTRATEGIA "ZERO-API" (Prioridad Máxima)
         // Intentamos cargar un archivo local generado previamente.
@@ -93,6 +162,7 @@ async function initApp() {
         const staticResponse = await fetch('database.json');
         
         if (staticResponse.ok) {
+            updateLoadingStatus('Cargando datos locales...');
             const data = await staticResponse.json();
             console.log('🚀 Modo Estático Activo: Carga instantánea (0 consumo API)');
             processData(data.user, data.repos);
@@ -110,10 +180,12 @@ async function initApp() {
 
     try {
         if (cached) {
+            updateLoadingStatus('Cargando desde caché...');
             console.log('Cargando desde caché navegador...');
             user = cached.user;
             repos = cached.repos;
         } else {
+            updateLoadingStatus('Consultando API GitHub...');
             console.log('Consultando API GitHub...');
             const [userRes, reposRes] = await Promise.all([
                 fetch(`https://api.github.com/users/${USERNAME}`),
@@ -127,6 +199,7 @@ async function initApp() {
             repos = await reposRes.json();
             saveToCache(user, repos);
         }
+        updateLoadingStatus('Preparando interfaz...');
         processData(user, repos);
         hideLoading();
 
@@ -135,6 +208,7 @@ async function initApp() {
         const expiredData = getExpiredCache();
         if (expiredData) {
             showToast();
+            updateLoadingStatus('Usando datos en caché...');
             processData(expiredData.user, expiredData.repos);
             hideLoading();
         } else {
@@ -142,6 +216,13 @@ async function initApp() {
                 ? 'Límite de API excedido. Sube un archivo database.json para solucionarlo permanentemente.' 
                 : 'Error de conexión.');
         }
+    }
+}
+
+function updateLoadingStatus(message) {
+    const statusElement = document.getElementById('loading-status');
+    if (statusElement) {
+        statusElement.textContent = message;
     }
 }
 
@@ -158,6 +239,14 @@ function showToast() {
     const toast = document.getElementById('toast');
     toast.classList.remove('hidden');
     toast.classList.remove('translate-x-full');
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 500);
+    }, 5000);
 }
 
 function hideLoading() {
@@ -180,28 +269,15 @@ function showError(msg) {
 }
 
 function renderProfile(user) {
-    document.getElementById('avatar').src = user.avatar_url;
+    const avatarImg = document.getElementById('avatar');
+    avatarImg.src = user.avatar_url;
+    avatarImg.alt = `${user.name || user.login} - Avatar`;
+    
     document.getElementById('name').textContent = user.name || USERNAME;
     document.getElementById('username').textContent = `@${user.login}`;
-    document.getElementById('followers').textContent = user.followers;
-    document.getElementById('following').textContent = user.following;
+    animateCounter(document.getElementById('followers'), user.followers, 1000);
+    animateCounter(document.getElementById('following'), user.following, 1000);
     document.getElementById('github-link').href = user.html_url;
-    let clicks = 0;
-    const avatar = document.getElementById('avatar');
-    
-    avatar.style.cursor = 'pointer'; // Para saber que es clicable
-    avatar.onclick = () => {
-        clicks++;
-        if (clicks === 5) {
-            // Activamos el modo admin
-            localStorage.setItem('GMDRAX_ADMIN', 'true');
-            alert('🔓 MODO DUEÑO ACTIVADO\nAhora puedes ver los botones de edición.');
-            
-            // Recargamos para mostrar los botones
-            location.reload(); 
-        }
-    };
-
 }
 
 function calculateStats(repos) {
@@ -213,16 +289,15 @@ function calculateStats(repos) {
         ? Object.keys(langs).reduce((a, b) => langs[a] > langs[b] ? a : b) 
         : 'N/A';
 
-    document.getElementById('total-repos').textContent = repos.length;
-    document.getElementById('total-stars').textContent = totalStars;
-    document.getElementById('total-forks').textContent = totalForks;
+    // Use animated counters
+    animateCounter(document.getElementById('total-repos'), repos.length, 1200);
+    animateCounter(document.getElementById('total-stars'), totalStars, 1500);
+    animateCounter(document.getElementById('total-forks'), totalForks, 1500);
     document.getElementById('top-lang').textContent = topLang;
 }
 
 // --- RENDERIZADO ---
-// --- RENDERIZADO ---
-function renderRepos(repos, append = false) {
-    const isAdmin = localStorage.getItem('GMDRAX_ADMIN') === 'true';
+function renderRepos(repos, append = false, searchTerm = '') {
     const grid = document.getElementById('repos-grid');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const showingCountLabel = document.getElementById('showing-count');
@@ -247,19 +322,36 @@ function renderRepos(repos, append = false) {
         const card = document.createElement('div');
         card.className = 'repo-card p-5 flex flex-col h-full cursor-pointer group';
         
-        const langColors = {
-            'JavaScript': '#facc15', 'TypeScript': '#3b82f6', 'Python': '#22c55e',
-            'HTML': '#f97316', 'CSS': '#3b82f6', 'Vue': '#42b883', 'React': '#61dafb'
-        };
-        const langColor = langColors[repo.language] || '#ffffff';
+        const langColor = LANG_COLORS[repo.language] || '#ffffff';
+        
+        // Escapar datos para prevenir XSS
+        const repoName = escapeHtml(repo.name);
+        const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';
+        
+        // Highlight search terms
+        const highlightedName = searchTerm ? highlightText(repoName, searchTerm) : repoName;
+        const highlightedDesc = searchTerm ? highlightText(repoDesc, searchTerm) : repoDesc;
+        
+        const repoCloneUrl = sanitizeUrl(repo.clone_url);
+        const repoHtmlUrl = sanitizeUrl(repo.html_url);
+        const editorUrl = repoHtmlUrl.replace('github.com', 'github.dev');
+        
+        // Calculate days since last update
+        const daysSinceUpdate = Math.floor((new Date() - new Date(repo.pushed_at)) / (1000 * 60 * 60 * 24));
+        const updateBadge = daysSinceUpdate === 0 ? 'Hoy' : 
+                           daysSinceUpdate === 1 ? 'Ayer' : 
+                           daysSinceUpdate < 7 ? `Hace ${daysSinceUpdate} días` :
+                           daysSinceUpdate < 30 ? `Hace ${Math.floor(daysSinceUpdate / 7)} semanas` :
+                           `Hace ${Math.floor(daysSinceUpdate / 30)} meses`;
         
         // Configuración de URLs
-        const editorUrl = repo.html_url.replace('github.com', 'github.dev');
         let hasWeb = false;
         let webUrl = '#';
         if (repo.homepage && repo.homepage.trim() !== "") {
-            hasWeb = true;
-            webUrl = repo.homepage.startsWith('http') ? repo.homepage : 'https://' + repo.homepage;
+            const homepage = repo.homepage.trim();
+            webUrl = homepage.startsWith('http') ? homepage : 'https://' + homepage;
+            webUrl = sanitizeUrl(webUrl);
+            hasWeb = webUrl !== '#';
         }
 
         // Generador de Badges (Limpio)
@@ -277,8 +369,9 @@ function renderRepos(repos, append = false) {
                 'node': 'node.js-6DA55F?style=flat&logo=node.js&logoColor=white',
                 'nextjs': 'Next-black?style=flat&logo=next.js&logoColor=white'
             };
-            const url = logos[topic.toLowerCase()] || `${topic}-blue?style=flat&logo=github`;
-            return `<img src="https://img.shields.io/badge/${url}" alt="${topic}" class="h-5 tech-badge rounded-sm">`;
+            const safeTopic = encodeURIComponent(topic);
+            const url = logos[topic.toLowerCase()] || `${safeTopic}-blue?style=flat&logo=github`;
+            return `<img src="https://img.shields.io/badge/${url}" alt="${escapeHtml(topic)}" class="h-5 tech-badge rounded-sm" loading="lazy">`;
         };
 
         const badgesHtml = repo.topics && repo.topics.length > 0
@@ -294,43 +387,33 @@ function renderRepos(repos, append = false) {
                     <i data-lucide="folder" class="w-5 h-5"></i>
                 </div>
                 
-                <div class="flex gap-2">
-                    ${isAdmin ? `
-                    <a href="${editorUrl}" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       onclick="event.stopPropagation()" 
-                       class="group/edit p-1.5 bg-blue-500/10 hover:bg-blue-500 rounded-md text-blue-400 hover:text-white border border-blue-500/50 transition-all z-10 flex items-center gap-1" 
-                       title="Editar ahora (Solo Tú)">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                    </a>` : ''}
-
-                    <button 
-                        onclick="event.stopPropagation(); copyCloneCommand('${repo.clone_url}', this)" 
-                        class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-primary transition-colors z-10" 
-                        title="Copiar 'git clone'">
-                        <i data-lucide="clipboard-copy" class="w-4 h-4"></i>
-                    </button>
-
+                <div class="flex gap-2" id="actions-${repo.id}">
                     ${hasWeb ? `
-                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/50 text-primary rounded-md text-[10px] font-bold uppercase hover:bg-primary hover:text-black transition-all z-10" title="Ver Proyecto Online">
+                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/50 text-primary rounded-md text-[10px] font-bold uppercase hover:bg-primary hover:text-black transition-all z-10" title="Ver Proyecto Online">
                         <i data-lucide="globe" class="w-3 h-3"></i> WEB
                     </a>` : ''}
                     
-                    <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
+                    <a href="${repoHtmlUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
                         <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
                 </div>
             </div>
             
-            ${badgesHtml} 
+            ${badgesHtml}
             
-            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${repo.name}</h3>
-            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${repo.description || 'Sin descripción disponible.'}</p>
+            <div class="mb-2">
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-white/50 bg-white/5 px-2 py-1 rounded-full border border-white/10">
+                    <i data-lucide="clock" class="w-3 h-3"></i>
+                    ${updateBadge}
+                </span>
+            </div>
+            
+            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${highlightedName}</h3>
+            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${highlightedDesc}</p>
             
             <div class="flex items-center justify-between text-[10px] font-mono uppercase font-bold text-gray-500 pt-3 border-t border-white/5 w-full">
                 <div class="flex items-center gap-2">
-                    ${repo.language ? `<span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${repo.language}` : ''}
+                    ${repo.language ? `<span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}
                 </div>
                 <div class="flex gap-3 text-gray-400">
                     <span class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> ${repo.stargazers_count}</span>
@@ -338,6 +421,18 @@ function renderRepos(repos, append = false) {
                 </div>
             </div>
         `;
+        
+        // Add clone button with event listener (secure approach)
+        const actionsDiv = card.querySelector(`#actions-${repo.id}`);
+        const cloneBtn = document.createElement('button');
+        cloneBtn.className = 'p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-primary transition-colors z-10';
+        cloneBtn.title = "Copiar 'git clone'";
+        cloneBtn.innerHTML = '<i data-lucide="clipboard-copy" class="w-4 h-4"></i>';
+        cloneBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyCloneCommand(repoCloneUrl, cloneBtn);
+        });
+        actionsDiv.insertBefore(cloneBtn, actionsDiv.firstChild);
         
         card.onclick = (e) => {
             if(!e.target.closest('a') && !e.target.closest('button')) openRepoViewer(repo);
@@ -354,17 +449,22 @@ function renderRepos(repos, append = false) {
         loadMoreBtn.classList.add('hidden');
     }
     showingCountLabel.textContent = `Mostrando ${Math.min(visibleCount, repos.length)} de ${repos.length}`;
+    
+    // Setup intersection observer for animation
+    if (!append) {
+        setTimeout(() => setupIntersectionObserver(), 100);
+    }
 }
 
 // --- FILTROS Y BÚSQUEDA ---
 function setupFilters(repos) {
     const languages = [...new Set(repos.map(r => r.language).filter(Boolean))];
     const container = document.getElementById('filter-container');
-    container.innerHTML = '<button class="filter-btn active bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white" data-filter="all" onclick="filterByLang(\'all\', this)">Todos</button>';
+    container.innerHTML = `<button class="${FILTER_BTN_ALL_ACTIVE}" data-filter="all" onclick="filterByLang('all', this)">Todos</button>`;
 
     languages.forEach(lang => {
         const btn = document.createElement('button');
-        btn.className = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+        btn.className = FILTER_BTN_INACTIVE;
         btn.textContent = lang;
         btn.onclick = () => filterByLang(lang, btn);
         container.appendChild(btn);
@@ -375,13 +475,13 @@ function filterByLang(lang, btnElement) {
     currentLangFilter = currentLangFilter === lang ? 'all' : lang;
     
     document.querySelectorAll('#filter-container button').forEach(b => {
-        b.className = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
+        b.className = FILTER_BTN_INACTIVE;
     });
 
     if (currentLangFilter !== 'all') {
-        btnElement.className = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10';
+        btnElement.className = FILTER_BTN_ACTIVE;
     } else {
-        document.querySelector('[data-filter="all"]').className = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white';
+        document.querySelector('[data-filter="all"]').className = FILTER_BTN_ALL_ACTIVE;
     }
 
     handleSearch(document.getElementById('search-input').value);
@@ -394,8 +494,51 @@ function handleSearch(term) {
         const matchesLang = currentLangFilter === 'all' || repo.language === currentLangFilter;
         return matchesSearch && matchesLang;
     });
+    // Apply current sorting
+    filteredRepos = sortRepositories(filteredRepos, currentSort);
     visibleCount = ITEMS_PER_PAGE;
-    renderRepos(filteredRepos);
+    renderRepos(filteredRepos, false, term);
+}
+
+// Helper function to highlight search terms
+function highlightText(text, term) {
+    if (!term || term.length === 0) return text;
+    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-400/30 text-yellow-200 px-1 rounded">$1</mark>');
+}
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// --- THEME TOGGLE ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.classList.toggle('light', savedTheme === 'light');
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.classList.contains('light');
+    const newTheme = isLight ? 'dark' : 'light';
+    
+    html.classList.toggle('light');
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    const darkIcon = document.querySelector('.dark-icon');
+    const lightIcon = document.querySelector('.light-icon');
+    
+    if (theme === 'light') {
+        darkIcon?.classList.add('hidden');
+        lightIcon?.classList.remove('hidden');
+    } else {
+        darkIcon?.classList.remove('hidden');
+        lightIcon?.classList.add('hidden');
+    }
 }
 
 // --- VISOR DE CÓDIGO (Árbol de Directorios) ---
@@ -469,9 +612,9 @@ function handleFileClick(element) {
 
 // 4. Abre el modal y carga el árbol
 async function openRepoViewer(repo) {
-    // ... (Tu código de apertura de modal) ...
     const modal = document.getElementById('modal');
-    modal.classList.remove('hidden');
+    modal.classList.remove('hidden', 'closing');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
     document.getElementById('modal-title').textContent = repo.name;
 
     const fileTree = document.getElementById('file-tree');
@@ -483,10 +626,20 @@ async function openRepoViewer(repo) {
     lucide.createIcons();
 
     try {
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repo.name}/git/trees/${repo.default_branch}?recursive=1`);
-        if (!res.ok) throw new Error('Error API');
+        const cacheKey = `${repo.name}:${repo.default_branch}`;
+        let data;
         
-        const data = await res.json();
+        // Check session cache first
+        if (sessionCache.trees.has(cacheKey)) {
+            console.log('Using cached tree data');
+            data = sessionCache.trees.get(cacheKey);
+        } else {
+            const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repo.name}/git/trees/${repo.default_branch}?recursive=1`);
+            if (!res.ok) throw new Error('Error API');
+            data = await res.json();
+            // Cache the tree data
+            sessionCache.trees.set(cacheKey, data);
+        }
         
         if (data.tree) {
             const blobs = data.tree.filter(i => i.type === 'blob');
@@ -518,10 +671,21 @@ async function loadReadmeContent(repoName, branch, path) {
     const viewer = document.getElementById('code-viewer');
     try {
         const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${path}?ref=${branch}`);
+        
+        if (res.status === 403) {
+            throw new Error('API_LIMIT');
+        }
+        
+        if (!res.ok) {
+            throw new Error('Error de lectura');
+        }
+        
         const data = await res.json();
         
-        // Decodificar Base64 (soporta UTF-8)
-        const content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+        // Decodificar Base64 con TextDecoder (método correcto)
+        const binaryString = atob(data.content.replace(/\s/g, ''));
+        const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+        const content = new TextDecoder().decode(bytes);
         
         // Renderizar con MARKED.js
         viewer.innerHTML = `
@@ -532,7 +696,12 @@ async function loadReadmeContent(repoName, branch, path) {
             </div>`;
             
     } catch (e) {
-        viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+        console.error('Error loading README:', e);
+        if (e.message === 'API_LIMIT') {
+            viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
+        } else {
+            viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+        }
     }
 }
 
@@ -550,23 +719,33 @@ async function loadFileContent(repoName, branch, path, element) {
     viewer.innerHTML = '<div class="h-full flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>';
 
     try {
-        // EncodeURIComponent es vital por si la ruta tiene espacios o #
-        const safePath = path.split('/').map(p => encodeURIComponent(p)).join('/');
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${safePath}?ref=${branch}`);
+        const cacheKey = `${repoName}:${branch}:${path}`;
+        let content;
         
-        if (res.status === 403) throw new Error('API_LIMIT');
-        if (!res.ok) throw new Error('Error de lectura');
-        
-        const data = await res.json();
-        let content = '';
-        
-        if (data.encoding === 'base64') {
-            // Decodificación segura de caracteres especiales (UTF-8)
-            const binaryString = atob(data.content.replace(/\s/g, ''));
-            const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
-            content = new TextDecoder().decode(bytes);
+        // Check session cache first
+        if (sessionCache.files.has(cacheKey)) {
+            console.log('Using cached file content');
+            content = sessionCache.files.get(cacheKey);
         } else {
-            content = 'Archivo binario o muy grande.';
+            // EncodeURIComponent es vital por si la ruta tiene espacios o #
+            const safePath = path.split('/').map(p => encodeURIComponent(p)).join('/');
+            const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${safePath}?ref=${branch}`);
+            
+            if (res.status === 403) throw new Error('API_LIMIT');
+            if (!res.ok) throw new Error('Error de lectura');
+            
+            const data = await res.json();
+            
+            if (data.encoding === 'base64') {
+                // Decodificación segura de caracteres especiales (UTF-8)
+                const binaryString = atob(data.content.replace(/\s/g, ''));
+                const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+                content = new TextDecoder().decode(bytes);
+                // Cache the content
+                sessionCache.files.set(cacheKey, content);
+            } else {
+                content = 'Archivo binario o muy grande.';
+            }
         }
 
         const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
@@ -580,10 +759,15 @@ async function loadFileContent(repoName, branch, path, element) {
 }
 
 function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
+    const modal = document.getElementById('modal');
+    modal.classList.add('closing');
     
-    // Opcional: Limpiar el contenido para que al abrir otro repo se vea limpio
     setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('closing');
+        document.body.style.overflow = ''; // Restore body scroll
+        
+        // Limpiar el contenido para que al abrir otro repo se vea limpio
         document.getElementById('file-tree').innerHTML = '';
         document.getElementById('code-viewer').innerHTML = '';
     }, 300);
@@ -609,7 +793,8 @@ async function copyCloneCommand(url, btn) {
         
     } catch (err) {
         console.error('Error al copiar:', err);
-        alert('No se pudo copiar al portapapeles');
+        // Fallback: mostrar en alert
+        alert(`Copia este comando:\n${command}`);
     }
 }
 
@@ -620,4 +805,101 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(context, args), wait);
     };
+}
+
+// --- UTILIDADES DE SEGURIDAD ---
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function sanitizeUrl(url) {
+    if (!url) return '#';
+    // Ensure URL is safe (starts with http:// or https://)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    return '#';
+}
+
+// --- KEYBOARD NAVIGATION ---
+function handleGlobalKeyboard(e) {
+    const modal = document.getElementById('modal');
+    if (!modal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    }
+}
+
+// --- ANIMATED COUNTER ---
+function animateCounter(element, target, duration = 1500) {
+    const start = 0;
+    const increment = target / (duration / 16); // 60fps
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// --- INTERSECTION OBSERVER FOR CARDS ---
+function setupIntersectionObserver() {
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, options);
+    
+    // Observe all repo cards
+    document.querySelectorAll('.repo-card').forEach(card => {
+        card.classList.add('fade-in-hidden');
+        observer.observe(card);
+    });
+}
+
+// --- SORT REPOSITORIES ---
+function sortRepositories(repos, sortBy) {
+    const sorted = [...repos];
+    switch(sortBy) {
+        case 'stars':
+            return sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
+        case 'forks':
+            return sorted.sort((a, b) => b.forks_count - a.forks_count);
+        case 'name':
+            return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        case 'updated':
+        default:
+            return sorted.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+    }
+}
+
+function applySorting(sortBy) {
+    currentSort = sortBy;
+    filteredRepos = sortRepositories(filteredRepos, sortBy);
+    visibleCount = ITEMS_PER_PAGE;
+    renderRepos(filteredRepos);
+    
+    // Update active state in sort buttons
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.remove('active-sort');
+    });
+    document.querySelector(`[data-sort="${sortBy}"]`)?.classList.add('active-sort');
 }
