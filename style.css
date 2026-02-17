@@ -73,6 +73,78 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light theme */
+html.light body {
+  background: #f0f4f8;
+  color: #1a202c;
+}
+
+html.light .bg-fixed-layer {
+  background: 
+    radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 55%),
+    radial-gradient(circle at 30% 60%, rgba(236, 72, 153, 0.08) 0%, transparent 40%),
+    linear-gradient(135deg, #ffffff 0%, #f0f4f8 50%, #e2e8f0 100%);
+}
+
+html.light body::before,
+html.light body::after {
+  opacity: 0.3;
+}
+
+html.light .glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 
+    0 8px 32px 0 rgba(99, 102, 241, 0.1),
+    0 2px 8px 0 rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .repo-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(249, 250, 251, 0.9) 50%,
+    rgba(243, 244, 246, 0.85) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.15);
+  color: #1a202c;
+}
+
+html.light .repo-card h3 {
+  background: linear-gradient(
+    135deg,
+    #1a202c 0%,
+    #4a5568 50%,
+    #2d3748 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+html.light .text-white {
+  color: #1a202c !important;
+}
+
+html.light .text-white\/70,
+html.light .text-white\/60,
+html.light .text-white\/50,
+html.light .text-white\/40 {
+  color: #4a5568 !important;
+}
+
+html.light .text-gray-400,
+html.light .text-gray-500 {
+  color: #718096 !important;
 }
 
 /* CORRECCIÓN DE SUPERPOSICIÓN:

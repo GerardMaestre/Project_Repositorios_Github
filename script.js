@@ -64,6 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (yearElement) {
         yearElement.textContent = new Date().getFullYear();
     }
+    
+    // Initialize theme
+    initTheme();
+    
     initApp();
 
     // Listeners
@@ -99,6 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100);
     });
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', toggleTheme);
 });
 
 // --- GESTIÓN DE CACHÉ ---
@@ -283,7 +291,7 @@ function calculateStats(repos) {
 }
 
 // --- RENDERIZADO ---
-function renderRepos(repos, append = false) {
+function renderRepos(repos, append = false, searchTerm = '') {
     const grid = document.getElementById('repos-grid');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const showingCountLabel = document.getElementById('showing-count');
@@ -313,6 +321,11 @@ function renderRepos(repos, append = false) {
         // Escapar datos para prevenir XSS
         const repoName = escapeHtml(repo.name);
         const repoDesc = escapeHtml(repo.description) || 'Sin descripción disponible.';
+        
+        // Highlight search terms
+        const highlightedName = searchTerm ? highlightText(repoName, searchTerm) : repoName;
+        const highlightedDesc = searchTerm ? highlightText(repoDesc, searchTerm) : repoDesc;
+        
         const repoCloneUrl = sanitizeUrl(repo.clone_url);
         const repoHtmlUrl = sanitizeUrl(repo.html_url);
         const editorUrl = repoHtmlUrl.replace('github.com', 'github.dev');
@@ -389,8 +402,8 @@ function renderRepos(repos, append = false) {
                 </span>
             </div>
             
-            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${repoName}</h3>
-            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${repoDesc}</p>
+            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${highlightedName}</h3>
+            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${highlightedDesc}</p>
             
             <div class="flex items-center justify-between text-[10px] font-mono uppercase font-bold text-gray-500 pt-3 border-t border-white/5 w-full">
                 <div class="flex items-center gap-2">
@@ -478,7 +491,48 @@ function handleSearch(term) {
     // Apply current sorting
     filteredRepos = sortRepositories(filteredRepos, currentSort);
     visibleCount = ITEMS_PER_PAGE;
-    renderRepos(filteredRepos);
+    renderRepos(filteredRepos, false, term);
+}
+
+// Helper function to highlight search terms
+function highlightText(text, term) {
+    if (!term || term.length === 0) return text;
+    const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-400/30 text-yellow-200 px-1 rounded">$1</mark>');
+}
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// --- THEME TOGGLE ---
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.classList.toggle('light', savedTheme === 'light');
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.classList.contains('light');
+    const newTheme = isLight ? 'dark' : 'light';
+    
+    html.classList.toggle('light');
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    const darkIcon = document.querySelector('.dark-icon');
+    const lightIcon = document.querySelector('.light-icon');
+    
+    if (theme === 'light') {
+        darkIcon?.classList.add('hidden');
+        lightIcon?.classList.remove('hidden');
+    } else {
+        darkIcon?.classList.remove('hidden');
+        lightIcon?.classList.add('hidden');
+    }
 }
 
 // --- VISOR DE CÓDIGO (Árbol de Directorios) ---
