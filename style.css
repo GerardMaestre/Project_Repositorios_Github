@@ -797,6 +797,13 @@ button:active {
   margin-bottom: 3rem;
 }
 
+/* Tablet - 2 columns */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .repos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .repos-grid {
     grid-template-columns: 1fr;
@@ -806,6 +813,36 @@ button:active {
   :root {
     --blur-strong: 30px;
     --blur-medium: 20px;
+  }
+  
+  /* Make file tree collapsible on mobile */
+  #file-tree {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  /* Modal adjustments for mobile */
+  #modal .glass-panel {
+    flex-direction: column;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem !important;
+  }
+  
+  /* Stack filters on mobile */
+  #filter-container {
+    flex-wrap: wrap;
+  }
+  
+  /* Hide theme toggle on very small screens */
+  @media (max-width: 480px) {
+    #theme-toggle {
+      bottom: 24px;
+      left: 24px;
+      width: 48px;
+      height: 48px;
+    }
   }
 }
 

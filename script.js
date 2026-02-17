@@ -58,6 +58,12 @@ let currentLangFilter = 'all';
 let visibleCount = ITEMS_PER_PAGE;
 let currentSort = 'updated'; // 'updated', 'stars', 'forks', 'name'
 
+// Session cache for file tree and file content
+const sessionCache = {
+    trees: new Map(),
+    files: new Map()
+};
+
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
     const yearElement = document.getElementById('year');
@@ -620,10 +626,20 @@ async function openRepoViewer(repo) {
     lucide.createIcons();
 
     try {
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repo.name}/git/trees/${repo.default_branch}?recursive=1`);
-        if (!res.ok) throw new Error('Error API');
+        const cacheKey = `${repo.name}:${repo.default_branch}`;
+        let data;
         
-        const data = await res.json();
+        // Check session cache first
+        if (sessionCache.trees.has(cacheKey)) {
+            console.log('Using cached tree data');
+            data = sessionCache.trees.get(cacheKey);
+        } else {
+            const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repo.name}/git/trees/${repo.default_branch}?recursive=1`);
+            if (!res.ok) throw new Error('Error API');
+            data = await res.json();
+            // Cache the tree data
+            sessionCache.trees.set(cacheKey, data);
+        }
         
         if (data.tree) {
             const blobs = data.tree.filter(i => i.type === 'blob');
@@ -703,23 +719,33 @@ async function loadFileContent(repoName, branch, path, element) {
     viewer.innerHTML = '<div class="h-full flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>';
 
     try {
-        // EncodeURIComponent es vital por si la ruta tiene espacios o #
-        const safePath = path.split('/').map(p => encodeURIComponent(p)).join('/');
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${safePath}?ref=${branch}`);
+        const cacheKey = `${repoName}:${branch}:${path}`;
+        let content;
         
-        if (res.status === 403) throw new Error('API_LIMIT');
-        if (!res.ok) throw new Error('Error de lectura');
-        
-        const data = await res.json();
-        let content = '';
-        
-        if (data.encoding === 'base64') {
-            // Decodificación segura de caracteres especiales (UTF-8)
-            const binaryString = atob(data.content.replace(/\s/g, ''));
-            const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
-            content = new TextDecoder().decode(bytes);
+        // Check session cache first
+        if (sessionCache.files.has(cacheKey)) {
+            console.log('Using cached file content');
+            content = sessionCache.files.get(cacheKey);
         } else {
-            content = 'Archivo binario o muy grande.';
+            // EncodeURIComponent es vital por si la ruta tiene espacios o #
+            const safePath = path.split('/').map(p => encodeURIComponent(p)).join('/');
+            const res = await fetch(`https://api.github.com/repos/${USERNAME}/${repoName}/contents/${safePath}?ref=${branch}`);
+            
+            if (res.status === 403) throw new Error('API_LIMIT');
+            if (!res.ok) throw new Error('Error de lectura');
+            
+            const data = await res.json();
+            
+            if (data.encoding === 'base64') {
+                // Decodificación segura de caracteres especiales (UTF-8)
+                const binaryString = atob(data.content.replace(/\s/g, ''));
+                const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+                content = new TextDecoder().decode(bytes);
+                // Cache the content
+                sessionCache.files.set(cacheKey, content);
+            } else {
+                content = 'Archivo binario o muy grande.';
+            }
         }
 
         const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
