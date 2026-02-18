@@ -1,6 +1,7 @@
 {
   "name": "Gmdrax - Liquid Glass Portfolio",
   "short_name": "Gmdrax Portfolio",
+  "description": "Portafolio personal con diseño Glassmorphism que muestra proyectos de GitHub en tiempo real.",
   "start_url": "./index.html", 
   "display": "standalone",
   "background_color": "#0f0a1f",
