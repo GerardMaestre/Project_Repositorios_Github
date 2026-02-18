@@ -13,6 +13,9 @@ async function updatePortfolio() {
             fetch(`https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`)
         ]);
 
+        if (!userRes.ok) throw new Error(`Error API usuario: ${userRes.status}`);
+        if (!reposRes.ok) throw new Error(`Error API repos: ${reposRes.status}`);
+
         const user = await userRes.json();
         const repos = await reposRes.json();
 

@@ -278,9 +278,9 @@ function showDataSourceIndicator(source) {
             const displayAge = cacheAge < 60 
                 ? `${cacheAge} min` 
                 : `${Math.floor(cacheAge / 60)}h ${cacheAge % 60}min`;
-            cacheAgeText.textContent = `· Última actualización: hace ${displayAge}`;
+            if (cacheAgeText) cacheAgeText.textContent = `· Última actualización: hace ${displayAge}`;
         } else {
-            cacheAgeText.textContent = source === 'api' ? '· Recién actualizado' : '';
+            if (cacheAgeText) cacheAgeText.textContent = source === 'api' ? '· Recién actualizado' : '';
         }
         
         indicator.classList.remove('hidden');
@@ -420,7 +420,6 @@ function renderRepos(repos, append = false, searchTerm = '') {
         
         const repoCloneUrl = sanitizeUrl(repo.clone_url);
         const repoHtmlUrl = sanitizeUrl(repo.html_url);
-        const editorUrl = repoHtmlUrl.replace('github.com', 'github.dev');
         
         // Calculate days since last update
         const daysSinceUpdate = Math.floor((new Date() - new Date(repo.pushed_at)) / (1000 * 60 * 60 * 24));
@@ -558,7 +557,11 @@ function setupFilters(repos) {
 }
 
 function filterByLang(lang, btnElement) {
-    currentLangFilter = currentLangFilter === lang ? 'all' : lang;
+    if (lang === 'all') {
+        currentLangFilter = 'all';
+    } else {
+        currentLangFilter = currentLangFilter === lang ? 'all' : lang;
+    }
     
     document.querySelectorAll('#filter-container button').forEach(b => {
         b.className = FILTER_BTN_INACTIVE;
@@ -935,6 +938,9 @@ function handleGlobalKeyboard(e) {
 
 // --- ANIMATED COUNTER ---
 function animateCounter(element, target, duration = 1500) {
+    if (!element) return; // Protección contra elemento null
+    if (target === 0) { element.textContent = 0; return; }
+    
     const start = 0;
     const increment = target / (duration / 16); // 60fps
     let current = start;

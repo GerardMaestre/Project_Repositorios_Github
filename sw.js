@@ -1,10 +1,6 @@
 // Service Worker para PWA - Liquid Glass Portfolio
 // CAMBIO 1: Cambiamos el nombre de la versión para obligar al navegador a actualizar
-<<<<<<< HEAD
-const CACHE_NAME = 'gmdrax-portfolio-v2';
-=======
 const CACHE_NAME = 'gmdrax-portfolio-v3';
->>>>>>> 8259d3e (version funcional)
 
 // CAMBIO 2: Rutas relativas (./) y añadimos database.json
 const urlsToCache = [
