@@ -938,7 +938,7 @@ function handleGlobalKeyboard(e) {
 
 // --- ANIMATED COUNTER ---
 function animateCounter(element, target, duration = 1500) {
-    if (!element) return; // Guard contra elemento null
+    if (!element) return; // Protección contra elemento null
     if (target === 0) { element.textContent = 0; return; }
     
     const start = 0;
