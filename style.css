@@ -109,6 +109,11 @@ html.light .glass-panel {
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
+html.light .glass-search-bar {
+   background: #ffffff !important;
+   border-color: #e2e8f0;
+}
+
 html.light .repo-card {
   background: linear-gradient(
     145deg,
@@ -188,6 +193,26 @@ main {
   box-shadow: var(--shadow-glass);
   overflow: hidden;
   transition: all 0.6s var(--ease-liquid);
+}
+
+/* --- NUEVA CLASE PARA LA BARRA DE BÚSQUEDA (NO TRANSPARENTE) --- */
+.glass-search-bar {
+  position: relative;
+  background: #0f0a1f; /* Fondo sólido oscuro base */
+  background: linear-gradient(
+    135deg,
+    rgba(15, 10, 31, 0.95) 0%, 
+    rgba(20, 15, 45, 0.98) 100%
+  ); /* Gradiente casi sólido */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(139, 92, 246, 0.3); /* Borde más visible */
+  box-shadow: 
+    0 10px 40px -10px rgba(0,0,0,0.5),
+    0 0 15px rgba(139, 92, 246, 0.2); /* Pequeño resplandor */
+  overflow: hidden;
+  z-index: 50;
 }
 
 /* Borde interior brillante */
@@ -967,7 +992,6 @@ select:focus-visible {
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-card);
   padding: 1.5rem;
-  overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
 }
@@ -1067,7 +1091,6 @@ select:focus-visible {
 }
 
 /* Ajustes finales de interacción y rendimiento */
-/* Suavizar animaciones de tarjetas de repos para no solaparse tanto */
 .repo-card {
   transition: transform 220ms var(--ease-liquid), box-shadow 220ms var(--ease-liquid), background 220ms var(--ease-liquid);
 }
@@ -1076,7 +1099,6 @@ select:focus-visible {
   transform: translateY(-2px);
 }
 
-/* Evitar duplicar definiciones de fade-in-hidden: mantenemos la versión ligera */
 .fade-in-hidden {
   opacity: 0;
   transform: translateY(10px);
@@ -1088,7 +1110,6 @@ select:focus-visible {
   transition: opacity 220ms ease-out, transform 220ms ease-out;
 }
 
-/* Ajustar botón scroll-to-top para que se sienta responsivo pero no excesivo */
 #scroll-to-top {
   transition: opacity 220ms ease, transform 150ms ease;
 }
@@ -1097,7 +1118,6 @@ select:focus-visible {
   transform: translateY(-3px) scale(1.05);
 }
 
-/* Viewer de código más legible sin tocar el diseño general */
 #code-viewer pre {
   font-size: 11px;
   line-height: 1.6;

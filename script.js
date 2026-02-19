@@ -6,10 +6,10 @@ const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutos en milisegundos
 
-// Constantes de estilos para evitar duplicación
-const FILTER_BTN_INACTIVE = 'filter-btn bg-black/60 hover:bg-white/20 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/20';
-const FILTER_BTN_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10';
-const FILTER_BTN_ALL_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white';
+// CAMBIO: Mejoras visuales en los botones de filtro (centrado y colores hover)
+const FILTER_BTN_INACTIVE = 'filter-btn bg-slate-900/60 hover:bg-violet-600/40 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/10 flex items-center justify-center';
+const FILTER_BTN_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10 flex items-center justify-center';
+const FILTER_BTN_ALL_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white flex items-center justify-center';
 
 // Constantes de colores de lenguajes
 const LANG_COLORS = {
