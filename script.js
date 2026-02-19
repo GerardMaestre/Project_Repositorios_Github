@@ -406,7 +406,7 @@ function renderRepos(repos, append = false, searchTerm = '') {
 
     itemsToShow.forEach((repo) => {
         const card = document.createElement('div');
-        card.className = 'repo-card p-5 flex flex-col h-full cursor-pointer group';
+        card.className = 'repo-card p-5 flex flex-col min-h-[280px] cursor-pointer group';
         
         const langColor = LANG_COLORS[repo.language] || '#ffffff';
         
@@ -480,6 +480,9 @@ function renderRepos(repos, append = false, searchTerm = '') {
                     
                     <a href="${repoHtmlUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
                         <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>
+                    <a href="https://vscode.dev/github/${USERNAME}/${repo.name}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/50 text-blue-400 rounded-md text-[10px] font-bold uppercase hover:bg-blue-500 hover:text-white transition-all z-10" title="Abrir en VS Code Online">
+                        <i data-lucide="code-2" class="w-3 h-3"></i> VS Code
                     </a>
                 </div>
             </div>
