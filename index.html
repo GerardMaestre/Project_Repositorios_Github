@@ -73,92 +73,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
     
-    <style>
-        /* Burbujas flotantes adicionales */
-        .floating-bubbles {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            pointer-events: none;
-            overflow: hidden;
-        }
-        
-        .bubble {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(
-                circle at 30% 30%,
-                rgba(139, 92, 246, 0.4),
-                rgba(99, 102, 241, 0.2)
-            );
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 
-                0 8px 32px rgba(99, 102, 241, 0.3),
-                inset -4px -4px 8px rgba(0, 0, 0, 0.1),
-                inset 4px 4px 8px rgba(255, 255, 255, 0.1);
-        }
-        
-        .bubble-1 {
-            width: 120px;
-            height: 120px;
-            top: 10%;
-            left: 5%;
-            animation: float 15s ease-in-out infinite;
-        }
-        
-        .bubble-2 {
-            width: 80px;
-            height: 80px;
-            top: 60%;
-            right: 10%;
-            animation: float 12s ease-in-out infinite 2s;
-        }
-        
-        .bubble-3 {
-            width: 60px;
-            height: 60px;
-            bottom: 20%;
-            left: 15%;
-            animation: float 18s ease-in-out infinite 4s;
-        }
-        
-        .bubble-4 {
-            width: 100px;
-            height: 100px;
-            top: 30%;
-            right: 20%;
-            animation: float 14s ease-in-out infinite 1s;
-        }
-        
-        .bubble-5 {
-            width: 70px;
-            height: 70px;
-            bottom: 30%;
-            right: 5%;
-            animation: float 16s ease-in-out infinite 3s;
-        }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(0, 0) scale(1);
-                opacity: 0.6;
-            }
-            25% {
-                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(20px, -30px) scale(1.1);
-                opacity: 0.8;
-            }
-            50% {
-                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(-10px, -60px) scale(0.9);
-                opacity: 0.5;
-            }
-            75% {
-                transform: translate(var(--parallax-x, 0), var(--parallax-y, 0)) translate(30px, -40px) scale(1.05);
-                opacity: 0.7;
-            }
-        }
-    </style>
 </head>
 
 <body class="min-h-screen antialiased">
@@ -166,15 +80,6 @@
     <!-- Fondo Liquid Glass -->
     <div class="bg-fixed-layer"></div>
     
-    <!-- Burbujas Flotantes -->
-    <div class="floating-bubbles">
-        <div class="bubble bubble-1"></div>
-        <div class="bubble bubble-2"></div>
-        <div class="bubble bubble-3"></div>
-        <div class="bubble bubble-4"></div>
-        <div class="bubble bubble-5"></div>
-    </div>
-
     <!-- Loading Screen -->
     <div id="loading" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500" style="background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1f 100%);">
         <div class="text-center space-y-6">
@@ -344,7 +249,7 @@
         </header>
 
         <!-- Search Bar -->
-        <div class="sticky top-4 z-40 mb-10">
+        <div class="sticky top-4 z-40 mb-12">
             <div class="glass-panel p-5 shadow-2xl">
                 <div class="flex flex-col gap-5">
                     <!-- Search Input with Refresh Button -->
@@ -497,38 +402,6 @@
                         console.log('SW registration failed:', error);
                     });
             });
-        }
-        
-        // Parallax mejorado con RAF y CSS custom properties
-        let rafId = null;
-        let mouseX = 0;
-        let mouseY = 0;
-        
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            
-            if (!rafId) {
-                rafId = requestAnimationFrame(updateParallax);
-            }
-        });
-        
-        function updateParallax() {
-            const bubbles = document.querySelectorAll('.bubble');
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            
-            bubbles.forEach((bubble, index) => {
-                const speed = (index + 1) * 0.02;
-                const x = (mouseX - centerX) * speed;
-                const y = (mouseY - centerY) * speed;
-                
-                // Use CSS custom properties to preserve the animation
-                bubble.style.setProperty('--parallax-x', `${x}px`);
-                bubble.style.setProperty('--parallax-y', `${y}px`);
-            });
-            
-            rafId = null;
         }
     </script>
 
