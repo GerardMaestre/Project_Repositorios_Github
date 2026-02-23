@@ -40,29 +40,6 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Archivo Black', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        primary: '#00f2ea',
-                        secondary: '#ff0050',
-                        darkbg: '#050510',
-                        cardbg: '#0a0a15',
-                    }
-                }
-            }
-        }
-    </script>
-    
     <!-- Icons - Lucide -->
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
     
@@ -75,229 +52,224 @@
     
 </head>
 
-<body class="min-h-screen antialiased">
+<body>
 
     <!-- Fondo Liquid Glass -->
     <div class="bg-fixed-layer"></div>
     
-    <!-- Loading Screen -->
-    <div id="loading" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500" style="background: linear-gradient(135deg, #1a0b2e 0%, #0f0a1f 100%);">
-        <div class="text-center space-y-6">
+    <!-- Pantalla de Carga -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
             <!-- Spinner Líquido -->
-            <div class="relative w-24 h-24 mx-auto">
-                <div class="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin"></div>
-                <div class="absolute inset-2 border-4 border-transparent border-r-blue-500 rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
-                <div class="absolute inset-4 border-4 border-transparent border-b-cyan-500 rounded-full animate-spin" style="animation-duration: 2s;"></div>
+            <div class="loading-spinner">
+                <div class="spinner-ring spinner-ring--outer"></div>
+                <div class="spinner-ring spinner-ring--middle"></div>
+                <div class="spinner-ring spinner-ring--inner"></div>
             </div>
             
-            <div class="space-y-3">
-                <p id="loading-text" class="text-white font-bold text-base tracking-wide">
-                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">Cargando portafolio</span>
+            <div class="loading-info">
+                <p id="loading-text" class="loading-label">
+                    <span class="loading-gradient-text">Cargando portafolio</span>
                 </p>
-                <p id="loading-status" class="text-white/50 text-xs font-medium min-h-[16px]">Preparando interfaz...</p>
-                <div class="flex justify-center gap-2">
-                    <span class="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce shadow-lg shadow-purple-500/50" style="animation-delay: 0s"></span>
-                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce shadow-lg shadow-blue-500/50" style="animation-delay: 0.15s"></span>
-                    <span class="w-2.5 h-2.5 bg-cyan-500 rounded-full animate-bounce shadow-lg shadow-cyan-500/50" style="animation-delay: 0.3s"></span>
+                <p id="loading-status" class="loading-status">Preparando interfaz...</p>
+                <div class="loading-dots">
+                    <span class="loading-dot loading-dot--purple"></span>
+                    <span class="loading-dot loading-dot--blue"></span>
+                    <span class="loading-dot loading-dot--cyan"></span>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-6 right-6 z-[60] max-w-sm transform translate-x-full transition-all duration-500 ease-out hidden">
-        <div class="glass-panel p-5 border-l-4 border-yellow-400 shadow-2xl">
-            <div class="flex items-start gap-4">
-                <div class="flex-shrink-0 w-10 h-10 bg-yellow-400/20 rounded-full flex items-center justify-center">
-                    <i data-lucide="wifi-off" class="w-5 h-5 text-yellow-400"></i>
+    <!-- Notificacion Toast -->
+    <div id="toast" class="toast hidden">
+        <div class="toast__panel glass-panel">
+            <div class="toast__content">
+                <div class="toast__icon-wrapper">
+                    <i data-lucide="wifi-off"></i>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-white mb-1">Modo Caché</p>
-                    <p class="text-xs text-white/70">Datos almacenados localmente</p>
+                <div class="toast__text">
+                    <p class="toast__title">Modo Caché</p>
+                    <p class="toast__message">Datos almacenados localmente</p>
                 </div>
-                <button onclick="document.getElementById('toast').classList.add('hidden')" class="flex-shrink-0 text-white/50 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-4 h-4"></i>
+                <button class="toast__close" onclick="document.getElementById('toast').classList.add('hidden')">
+                    <i data-lucide="x"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Scroll to Top Button -->
-    <button id="scroll-to-top" class="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-2xl shadow-purple-500/50 opacity-0 pointer-events-none transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center group" aria-label="Volver arriba">
-        <i data-lucide="arrow-up" class="w-6 h-6 group-hover:animate-bounce"></i>
+    <!-- Botón Volver Arriba -->
+    <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
+        <i data-lucide="arrow-up"></i>
     </button>
 
-    <!-- Theme Toggle Button -->
-    <button id="theme-toggle" class="fixed bottom-8 left-8 z-50 w-14 h-14 rounded-full glass-panel text-white shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center group" aria-label="Cambiar tema">
-        <i data-lucide="moon" class="w-6 h-6 dark-icon"></i>
-        <i data-lucide="sun" class="w-6 h-6 light-icon hidden"></i>
+    <!-- Botón Cambiar Tema -->
+    <button id="theme-toggle" class="btn-theme-toggle glass-panel" aria-label="Cambiar tema">
+        <i data-lucide="moon" class="theme-icon dark-icon"></i>
+        <i data-lucide="sun" class="theme-icon light-icon hidden"></i>
     </button>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl opacity-0 transition-opacity duration-1000" id="main-content" style="will-change: opacity">
+    <!-- Contenido Principal -->
+    <main class="main-content" id="main-content">
         
-        <!-- Header -->
-        <header class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+        <!-- Cabecera -->
+        <header class="header-layout">
             
-            <!-- Sidebar Profile -->
-            <aside class="lg:col-span-4 xl:col-span-3 order-2 lg:order-1">
-                <div class="glass-panel p-7 text-center sticky top-6 space-y-7">
-                    <div class="relative inline-block group">
-                        <div class="w-36 h-36 mx-auto rounded-full overflow-hidden ring-4 ring-white/20 ring-offset-8 ring-offset-transparent shadow-2xl transition-all duration-500 group-hover:ring-white/30 group-hover:ring-offset-purple-500/20" style="box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4);">
-                            <img id="avatar" src="" alt="Avatar de usuario" loading="lazy" class="w-full h-full object-cover bg-gradient-to-br from-purple-900 to-blue-900 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-3">
+            <!-- Barra Lateral - Perfil -->
+            <aside class="sidebar">
+                <div class="profile-card glass-panel">
+                    <div class="avatar-container">
+                        <div class="avatar-frame">
+                            <img id="avatar" src="" alt="Avatar de usuario" loading="lazy" class="avatar-img">
                         </div>
-                        <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 border-4 border-[#0f0a1f] rounded-full flex items-center justify-center shadow-lg shadow-green-500/50 animate-pulse">
-                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        <div class="avatar-status">
+                            <i data-lucide="zap"></i>
                         </div>
                     </div>
                     
-                    <div class="space-y-3">
-                        <h1 id="name" class="text-2xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent tracking-tight"></h1>
-                        <p id="username" class="text-sm font-mono font-bold text-purple-400 bg-purple-500/10 px-4 py-2 rounded-full inline-block border border-purple-500/30 backdrop-blur-sm"></p>
+                    <div class="profile-info">
+                        <h1 id="name" class="profile-name"></h1>
+                        <p id="username" class="profile-username"></p>
                     </div>
                     
-                    <a id="github-link" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="group block w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-sm rounded-2xl transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 active:scale-95 overflow-hidden relative">
-                        <span class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></span>
-                        <span class="relative flex items-center justify-center gap-2">
-                            <i data-lucide="github" class="w-5 h-5"></i>
+                    <a id="github-link" href="#" target="_blank" rel="noopener noreferrer" class="profile-github-btn">
+                        <span class="shimmer-overlay"></span>
+                        <span class="btn-inner">
+                            <i data-lucide="github"></i>
                             Ver perfil completo
                         </span>
                     </a>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="glass-panel p-5 flex flex-col items-center justify-center space-y-2 hover:scale-105 transition-all duration-500 cursor-pointer group">
-                            <div class="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                                <i data-lucide="users" class="w-5 h-5 text-purple-400"></i>
+                    <div class="profile-counters">
+                        <div class="counter-card glass-panel">
+                            <div class="counter-icon counter-icon--purple">
+                                <i data-lucide="users"></i>
                             </div>
-                            <p id="followers" class="text-2xl font-bold text-white">0</p>
-                            <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider">Followers</p>
+                            <p id="followers" class="counter-value">0</p>
+                            <p class="counter-label">Followers</p>
                         </div>
 
-                        <div class="glass-panel p-5 flex flex-col items-center justify-center space-y-2 hover:scale-105 transition-all duration-500 cursor-pointer group">
-                            <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                                <i data-lucide="user-plus" class="w-5 h-5 text-blue-400"></i>
+                        <div class="counter-card glass-panel">
+                            <div class="counter-icon counter-icon--blue">
+                                <i data-lucide="user-plus"></i>
                             </div>
-                            <p id="following" class="text-2xl font-bold text-white">0</p>
-                            <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider">Following</p>
+                            <p id="following" class="counter-value">0</p>
+                            <p class="counter-label">Following</p>
                         </div>
                     </div>
                 </div> 
             </aside>
 
-            <!-- Main Header Content -->
-            <div class="lg:col-span-8 xl:col-span-9 space-y-7 order-1 lg:order-2">
+            <!-- Contenido Principal de Cabecera -->
+            <div class="header-content">
                 <!-- Hero -->
-                <div class="glass-panel p-10 lg:p-14 space-y-5 relative overflow-hidden group">
-                    <!-- Glow Effect -->
-                    <div class="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-purple-500/30 to-blue-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-1000"></div>
-                    
-                    <div class="relative z-10">
+                <div class="hero-banner glass-panel">
+                    <div class="hero-glow"></div>
+                    <div class="hero-body">
                         <h2 class="hero-title">
-                            <span class="block">Portafolio</span>
-                            <span class="block mt-2">Gerard Maestre</span>
+                            <span>Portafolio</span>
+                            <span>Gerard Maestre</span>
                         </h2>
-                        <p class="text-lg text-white/80 max-w-2xl leading-relaxed font-medium">
+                        <p class="hero-description">
                             Explorá mis proyectos open source de manera mas estructurada y con varias opciones dinamicas
                         </p>
                     </div>
                 </div>
 
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Cuadrícula de Estadísticas -->
+                <div class="stats-grid">
                     <!-- Repos -->
-                    <div class="glass-panel p-6 text-center space-y-3 hover:scale-105 transition-all duration-500 group cursor-pointer">
-                        <div class="w-14 h-14 mx-auto bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-purple-500/20">
-                            <i data-lucide="code-2" class="w-7 h-7 text-purple-400"></i>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon stat-icon--purple">
+                            <i data-lucide="code-2"></i>
                         </div>
-                        <h3 id="total-repos" class="text-4xl font-bold text-white">0</h3>
-                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Repositorios</p>
+                        <h3 id="total-repos" class="stat-value">0</h3>
+                        <p class="stat-label">Repositorios</p>
                     </div>
                     
                     <!-- Stars -->
-                    <div class="glass-panel p-6 text-center space-y-3 hover:scale-105 transition-all duration-500 group cursor-pointer">
-                        <div class="w-14 h-14 mx-auto bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-yellow-500/20">
-                            <i data-lucide="star" class="w-7 h-7 text-yellow-400"></i>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon stat-icon--yellow">
+                            <i data-lucide="star"></i>
                         </div>
-                        <h3 id="total-stars" class="text-4xl font-bold text-white">0</h3>
-                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Estrellas</p>
+                        <h3 id="total-stars" class="stat-value">0</h3>
+                        <p class="stat-label">Estrellas</p>
                     </div>
                     
                     <!-- Forks -->
-                    <div class="glass-panel p-6 text-center space-y-3 hover:scale-105 transition-all duration-500 group cursor-pointer">
-                        <div class="w-14 h-14 mx-auto bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-blue-500/20">
-                            <i data-lucide="git-fork" class="w-7 h-7 text-blue-400"></i>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon stat-icon--blue">
+                            <i data-lucide="git-fork"></i>
                         </div>
-                        <h3 id="total-forks" class="text-4xl font-bold text-white">0</h3>
-                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Forks</p>
+                        <h3 id="total-forks" class="stat-value">0</h3>
+                        <p class="stat-label">Forks</p>
                     </div>
                     
                     <!-- Top Lang -->
-                    <div class="glass-panel p-6 text-center space-y-3 hover:scale-105 transition-all duration-500 group cursor-pointer">
-                        <div class="w-14 h-14 mx-auto bg-gradient-to-br from-pink-500/20 to-pink-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg shadow-pink-500/20">
-                            <i data-lucide="terminal" class="w-7 h-7 text-pink-400"></i>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon stat-icon--pink">
+                            <i data-lucide="terminal"></i>
                         </div>
-                        <h3 id="top-lang" class="text-2xl font-bold text-white pt-2">...</h3>
-                        <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Top Lenguaje</p>
+                        <h3 id="top-lang" class="stat-value stat-value--small">...</h3>
+                        <p class="stat-label">Top Lenguaje</p>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Search Bar: CAMBIO A glass-search-bar PARA EVITAR TRANSPARENCIA -->
-        <div class="sticky top-4 z-40 mb-12">
-            <div class="glass-search-bar p-6 shadow-2xl">
-                <div class="flex flex-col gap-6">
-                    <!-- Search Input with Refresh Button -->
-                    <div class="flex gap-4 items-center">
-                        <div class="relative flex-1 group">
-                            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-white/40 w-5 h-5 pointer-events-none group-focus-within:text-purple-400 transition-colors"></i>
+        <!-- Barra de Búsqueda -->
+        <div class="search-wrapper">
+            <div class="glass-search-bar">
+                <div class="search-form">
+                    <!-- Input de Búsqueda con Botón Refrescar -->
+                    <div class="search-row">
+                        <div class="search-field">
+                            <i data-lucide="search" class="search-field__icon"></i>
                             <input type="text" 
                                    id="search-input" 
-                                   placeholder="Buscar proyectos..." 
-                                   class="w-full pl-14 pr-5 py-4 text-sm font-medium placeholder:text-white/40 transition-all">
+                                   placeholder="Buscar proyectos...">
                         </div>
                         
-                        <!-- Refresh Button -->
+                        <!-- Botón Refrescar -->
                         <button id="refresh-data-btn" 
-                                class="flex-shrink-0 flex items-center gap-2 px-4 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-xs rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                                class="btn-refresh"
                                 title="Refrescar datos desde GitHub API"
                                 onclick="forceRefreshData()">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                            <span class="hidden sm:inline">Refrescar</span>
+                            <i data-lucide="refresh-cw"></i>
+                            <span class="btn-refresh__label">Refrescar</span>
                         </button>
                     </div>
                     
-                    <!-- Data Source Indicator -->
-                    <div id="data-source-indicator" class="flex items-center gap-2 text-xs text-white/50 font-mono hidden">
-                        <i data-lucide="info" class="w-3 h-3"></i>
+                    <!-- Indicador de Fuente de Datos -->
+                    <div id="data-source-indicator" class="data-source hidden">
+                        <i data-lucide="info"></i>
                         <span id="data-source-text">Fuente de datos: API</span>
                         <span id="cache-age-text"></span>
                     </div>
                     
-                    <!-- Filters Container - Better alignment -->
-                    <div class="flex flex-col lg:flex-row gap-5 items-stretch lg:items-center justify-between border-t border-white/5 pt-4">
-                        <!-- Sort Buttons -->
-                        <div class="flex gap-2 flex-wrap items-center">
-                            <span class="text-xs font-bold text-white/50 uppercase tracking-wider mr-2">Ordenar:</span>
-                            <button class="sort-btn active-sort text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="updated" onclick="applySorting('updated')">
-                                <i data-lucide="clock" class="w-3 h-3 inline"></i> Recientes
+                    <!-- Contenedor de Filtros -->
+                    <div class="filters-row">
+                        <!-- Botones de Ordenar -->
+                        <div class="sort-group">
+                            <span class="sort-group__label">Ordenar:</span>
+                            <button class="sort-btn active-sort" data-sort="updated" onclick="applySorting('updated')">
+                                <i data-lucide="clock"></i> Recientes
                             </button>
-                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="stars" onclick="applySorting('stars')">
-                                <i data-lucide="star" class="w-3 h-3 inline"></i> Estrellas
+                            <button class="sort-btn" data-sort="stars" onclick="applySorting('stars')">
+                                <i data-lucide="star"></i> Estrellas
                             </button>
-                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="forks" onclick="applySorting('forks')">
-                                <i data-lucide="git-fork" class="w-3 h-3 inline"></i> Forks
+                            <button class="sort-btn" data-sort="forks" onclick="applySorting('forks')">
+                                <i data-lucide="git-fork"></i> Forks
                             </button>
-                            <button class="sort-btn text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all border border-white/10" data-sort="name" onclick="applySorting('name')">
-                                <i data-lucide="arrow-down-a-z" class="w-3 h-3 inline"></i> A-Z
+                            <button class="sort-btn" data-sort="name" onclick="applySorting('name')">
+                                <i data-lucide="arrow-down-a-z"></i> A-Z
                             </button>
                         </div>
                         
-                        <!-- Language Filters - Horizontal Scroll -->
-                        <div class="flex gap-3 pb-2 lg:pb-0 scrollbar-hide lg:justify-end items-center" id="filter-container">
-                            <!-- Populated via JS -->
-                            <button class="bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white flex items-center justify-center" data-filter="all" onclick="filterByLang('all', this)">
+                        <!-- Filtros por Lenguaje -->
+                        <div class="language-group scrollbar-hide" id="filter-container">
+                            <button class="filter-btn filter-btn--active" data-filter="all" onclick="filterByLang('all', this)">
                                 Todos
                             </button>
                         </div>
@@ -306,90 +278,86 @@
             </div>
         </div>
 
-        <!-- Repos Grid -->
+        <!-- Cuadrícula de Repositorios -->
         <div id="repos-grid" class="repos-grid">
-            <!-- Populated by JS -->
+            <!-- Rellenado por JS -->
         </div>
 
-        <!-- Load More -->
-        <div class="text-center space-y-5 mb-20">
-            <button id="load-more-btn" 
-                    class="hidden group px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-sm rounded-2xl transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/50 hover:scale-105 active:scale-95">
-                <span class="flex items-center gap-3">
-                    <i data-lucide="chevrons-down" class="w-5 h-5 group-hover:animate-bounce"></i>
+        <!-- Cargar Más -->
+        <div class="load-more-section">
+            <button id="load-more-btn" class="btn-load-more hidden">
+                <span class="btn-load-more__inner">
+                    <i data-lucide="chevrons-down"></i>
                     Cargar más proyectos
-                    <i data-lucide="chevrons-down" class="w-5 h-5 group-hover:animate-bounce"></i>
+                    <i data-lucide="chevrons-down"></i>
                 </span>
             </button>
-            <p id="showing-count" class="text-xs font-bold text-white/40 uppercase tracking-widest"></p>
+            <p id="showing-count" class="results-count"></p>
         </div>
 
-        <!-- Footer -->
-        <footer class="text-center py-10 border-t border-white/10">
-            <div class="space-y-3">
-                <p class="text-sm font-semibold text-white/70">
+        <!-- Pie de Página -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <p class="footer-author">
                     Diseñado y desarrollado por Gerard Maestre
                 </p>
-                <p class="text-xs font-mono text-white/40 uppercase tracking-[0.2em]">
+                <p class="footer-copyright">
                     &copy; <span id="year"></span> Gmdrax
                 </p>
             </div>
         </footer>
     </main>
 
-    <!-- Modal -->
-    <div id="modal" class="fixed inset-0 z-[100] hidden">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 backdrop-blur-md" style="background: rgba(15, 10, 31, 0.9);" onclick="closeModal()"></div>
+    <!-- Modal Visor de Código -->
+    <div id="modal" class="modal hidden">
+        <!-- Fondo -->
+        <div class="modal__backdrop" onclick="closeModal()"></div>
         
-        <!-- Modal Container -->
-        <div class="absolute inset-4 lg:inset-12 glass-panel flex flex-col overflow-hidden shadow-2xl">
-            <!-- Header -->
-            <div class="flex items-center justify-between p-6 lg:p-8 border-b border-white/10" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.05));">
-                <div class="flex items-center gap-4 min-w-0 flex-1">
-                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center">
-                        <i data-lucide="github" class="w-6 h-6 text-white"></i>
+        <!-- Contenedor del Modal -->
+        <div class="modal__container glass-panel">
+            <!-- Cabecera del Modal -->
+            <div class="modal__header">
+                <div class="modal__title-row">
+                    <div class="modal__icon">
+                        <i data-lucide="github"></i>
                     </div>
-                    <h3 id="modal-title" class="font-bold text-white text-xl lg:text-2xl tracking-tight truncate">
+                    <h3 id="modal-title" class="modal__title">
                         Repository
                     </h3>
                 </div>
-                <button onclick="closeModal()" 
-                        class="flex-shrink-0 p-3 hover:bg-white/10 rounded-xl text-white/60 hover:text-white transition-all ml-4 hover:rotate-90">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                <button class="modal__close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
                 </button>
             </div>
             
-            <!-- Content -->
-            <div class="flex flex-1 overflow-hidden">
-                <!-- File Tree -->
-                <div class="w-full lg:w-80 border-r border-white/5 overflow-y-auto p-5" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(99, 102, 241, 0.03));" id="file-tree">
-                    <div class="flex items-center justify-center h-full text-white/30">
-                        <div class="text-center space-y-3">
-                            <i data-lucide="folder" class="w-16 h-16 mx-auto opacity-20"></i>
-                            <p class="text-xs font-bold uppercase tracking-wide">Cargando...</p>
+            <!-- Cuerpo del Modal -->
+            <div class="modal__body">
+                <!-- Árbol de Archivos -->
+                <div class="modal__sidebar" id="file-tree">
+                    <div class="modal__placeholder">
+                        <div class="modal__placeholder-inner">
+                            <i data-lucide="folder"></i>
+                            <p class="modal__placeholder-text">Cargando...</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Code Viewer -->
-                <div class="flex-1 overflow-y-auto" style="background: linear-gradient(135deg, rgba(15, 10, 31, 0.8), rgba(26, 11, 46, 0.6));" id="code-container">
-                    <div id="code-viewer" class="h-full flex flex-col items-center justify-center text-white/20 p-10">
-                        <i data-lucide="mouse-pointer" class="w-20 h-20 opacity-10 mb-5"></i>
-                        <p class="text-sm font-bold uppercase tracking-wide opacity-40">
-                            Selecciona un archivo
-                        </p>
+                <!-- Visor de Código -->
+                <div class="modal__code-area" id="code-container">
+                    <div id="code-viewer" class="modal__code-viewer">
+                        <i data-lucide="mouse-pointer"></i>
+                        <p>Selecciona un archivo</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Initialize Icons -->
+    <!-- Inicializar Iconos -->
     <script>
         lucide.createIcons();
         
-        // Register Service Worker for PWA
+        // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')

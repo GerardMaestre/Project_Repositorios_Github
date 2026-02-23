@@ -6,10 +6,10 @@ const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
 const CACHE_KEY_TIME = `gh_time_${USERNAME}`;
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutos en milisegundos
 
-// CAMBIO: Mejoras visuales en los botones de filtro (centrado y colores hover)
-const FILTER_BTN_INACTIVE = 'filter-btn bg-slate-900/60 hover:bg-violet-600/40 text-gray-300 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border border-white/10 flex items-center justify-center';
-const FILTER_BTN_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white scale-105 shadow-lg shadow-white/10 flex items-center justify-center';
-const FILTER_BTN_ALL_ACTIVE = 'bg-white text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border border-white flex items-center justify-center';
+// Clases semánticas para botones de filtro
+const FILTER_BTN_INACTIVE = 'filter-btn';
+const FILTER_BTN_ACTIVE = 'filter-btn filter-btn--active';
+const FILTER_BTN_ALL_ACTIVE = 'filter-btn filter-btn--active';
 
 // Constantes de colores de lenguajes
 const LANG_COLORS = {
@@ -299,10 +299,10 @@ function showToast(title = 'Modo Caché', message = 'Datos almacenados localment
     };
     
     const colorClassMap = {
-        'info': 'w-5 h-5 text-yellow-400',
-        'warning': 'w-5 h-5 text-orange-400',
-        'success': 'w-5 h-5 text-green-400',
-        'error': 'w-5 h-5 text-red-400'
+        'info': 'toast__icon--info',
+        'warning': 'toast__icon--warning',
+        'success': 'toast__icon--success',
+        'error': 'toast__icon--error'
     };
     
     const icon = iconMap[type] || iconMap.info;
@@ -310,8 +310,8 @@ function showToast(title = 'Modo Caché', message = 'Datos almacenados localment
     
     // Update toast content
     const iconElement = toast.querySelector('[data-lucide]');
-    const titleElement = toast.querySelector('.text-sm.font-bold');
-    const messageElement = toast.querySelector('.text-xs');
+    const titleElement = toast.querySelector('.toast__title');
+    const messageElement = toast.querySelector('.toast__message');
     
     if (iconElement) {
         iconElement.setAttribute('data-lucide', icon);
@@ -321,14 +321,14 @@ function showToast(title = 'Modo Caché', message = 'Datos almacenados localment
     if (messageElement) messageElement.textContent = message;
     
     toast.classList.remove('hidden');
-    toast.classList.remove('translate-x-full');
+    toast.classList.add('toast--visible');
     
     // Reinitialize icons
     lucide.createIcons();
     
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
-        toast.classList.add('translate-x-full');
+        toast.classList.remove('toast--visible');
         setTimeout(() => {
             toast.classList.add('hidden');
         }, 500);
@@ -346,10 +346,10 @@ function hideLoading() {
 
 function showError(msg) {
     document.getElementById('loading').innerHTML = `
-        <div class="text-red-500 text-center px-4">
-            <p class="font-bold text-xl mb-2">¡Ups!</p>
-            <p class="text-sm opacity-80">${msg}</p>
-            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-red-500/20 text-red-500 border border-red-500 rounded text-xs uppercase font-bold">Reintentar</button>
+        <div class="error-screen">
+            <p class="error-title">¡Ups!</p>
+            <p class="error-message">${msg}</p>
+            <button onclick="location.reload()" class="btn-retry">Reintentar</button>
         </div>
     `;
 }
@@ -391,7 +391,7 @@ function renderRepos(repos, append = false, searchTerm = '') {
     if (!append) grid.innerHTML = '';
 
     if (repos.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 font-bold uppercase tracking-widest text-xs">Sin resultados encontrados</div>`;
+        grid.innerHTML = `<div class="repos-grid__empty">Sin resultados encontrados</div>`;
         loadMoreBtn.classList.add('hidden');
         showingCountLabel.textContent = '';
         return;
@@ -406,7 +406,7 @@ function renderRepos(repos, append = false, searchTerm = '') {
 
     itemsToShow.forEach((repo) => {
         const card = document.createElement('div');
-        card.className = 'repo-card p-5 flex flex-col min-h-[280px] cursor-pointer group';
+        card.className = 'repo-card';
         
         const langColor = LANG_COLORS[repo.language] || '#ffffff';
         
@@ -456,56 +456,56 @@ function renderRepos(repos, append = false, searchTerm = '') {
             };
             const safeTopic = encodeURIComponent(topic);
             const url = logos[topic.toLowerCase()] || `${safeTopic}-blue?style=flat&logo=github`;
-            return `<img src="https://img.shields.io/badge/${url}" alt="${escapeHtml(topic)}" class="h-5 tech-badge rounded-sm" loading="lazy">`;
+            return `<img src="https://img.shields.io/badge/${url}" alt="${escapeHtml(topic)}" class="repo-card__tech-badge" loading="lazy">`;
         };
 
         const badgesHtml = repo.topics && repo.topics.length > 0
-            ? `<div class="flex flex-wrap gap-1.5 mb-4 overflow-hidden h-6">
+            ? `<div class="repo-card__badges">
                 ${repo.topics.slice(0, 4).map(t => generateBadge(t)).join('')}
                </div>`
-            : '<div class="h-6 mb-4"></div>';
+            : '<div class="repo-card__badges-empty"></div>';
 
         // HTML Definitivo de la Tarjeta
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-4">
-                <div class="bg-white/5 p-2 rounded-lg border border-white/10 group-hover:bg-primary group-hover:text-black transition-colors">
-                    <i data-lucide="folder" class="w-5 h-5"></i>
+            <div class="repo-card__header">
+                <div class="repo-card__folder-icon">
+                    <i data-lucide="folder"></i>
                 </div>
                 
-                <div class="flex gap-2" id="actions-${repo.id}">
+                <div class="repo-card__actions" id="actions-${repo.id}">
                     ${hasWeb ? `
-                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/50 text-primary rounded-md text-[10px] font-bold uppercase hover:bg-primary hover:text-black transition-all z-10" title="Ver Proyecto Online">
-                        <i data-lucide="globe" class="w-3 h-3"></i> WEB
+                    <a href="${webUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__web-link" title="Ver Proyecto Online">
+                        <i data-lucide="globe"></i> WEB
                     </a>` : ''}
                     
-                    <a href="${repoHtmlUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-white transition-colors z-10" title="Ver en GitHub">
-                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    <a href="${repoHtmlUrl}" target="_blank" rel="noopener noreferrer" class="repo-card__github-link" title="Ver en GitHub">
+                        <i data-lucide="external-link"></i>
                     </a>
-                    <a href="https://vscode.dev/github/${USERNAME}/${repo.name}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 px-2 py-1 bg-blue-500/10 border border-blue-500/50 text-blue-400 rounded-md text-[10px] font-bold uppercase hover:bg-blue-500 hover:text-white transition-all z-10" title="Abrir en VS Code Online">
-                        <i data-lucide="code-2" class="w-3 h-3"></i> VS Code
+                    <a href="https://vscode.dev/github/${USERNAME}/${repo.name}" target="_blank" rel="noopener noreferrer" class="repo-card__vscode-link" title="Abrir en VS Code Online">
+                        <i data-lucide="code-2"></i> VS Code
                     </a>
                 </div>
             </div>
             
             ${badgesHtml}
             
-            <div class="mb-2">
-                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-white/50 bg-white/5 px-2 py-1 rounded-full border border-white/10">
-                    <i data-lucide="clock" class="w-3 h-3"></i>
+            <div class="repo-card__update-row">
+                <span class="repo-card__update-tag">
+                    <i data-lucide="clock"></i>
                     ${updateBadge}
                 </span>
             </div>
             
-            <h3 class="font-display text-lg mb-2 text-white group-hover:text-primary transition-colors uppercase leading-tight break-all">${highlightedName}</h3>
-            <p class="text-xs text-gray-400 mb-6 flex-1 truncate-2-lines leading-relaxed">${highlightedDesc}</p>
+            <h3 class="repo-card__name">${highlightedName}</h3>
+            <p class="repo-card__description truncate-2-lines">${highlightedDesc}</p>
             
-            <div class="flex items-center justify-between text-[10px] font-mono uppercase font-bold text-gray-500 pt-3 border-t border-white/5 w-full">
-                <div class="flex items-center gap-2">
-                    ${repo.language ? `<span class="w-2 h-2 rounded-full" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}
+            <div class="repo-card__footer">
+                <div class="repo-card__language">
+                    ${repo.language ? `<span class="repo-card__lang-dot" style="background-color: ${langColor}; box-shadow: 0 0 5px ${langColor}"></span> ${escapeHtml(repo.language)}` : ''}
                 </div>
-                <div class="flex gap-3 text-gray-400">
-                    <span class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> ${repo.stargazers_count}</span>
-                    <span class="flex items-center gap-1"><i data-lucide="git-fork" class="w-3 h-3"></i> ${repo.forks_count}</span>
+                <div class="repo-card__stats">
+                    <span class="repo-card__stat"><i data-lucide="star"></i> ${repo.stargazers_count}</span>
+                    <span class="repo-card__stat"><i data-lucide="git-fork"></i> ${repo.forks_count}</span>
                 </div>
             </div>
         `;
@@ -513,9 +513,9 @@ function renderRepos(repos, append = false, searchTerm = '') {
         // Add clone button with event listener (secure approach)
         const actionsDiv = card.querySelector(`#actions-${repo.id}`);
         const cloneBtn = document.createElement('button');
-        cloneBtn.className = 'p-1.5 bg-white/5 hover:bg-white/20 rounded-md text-gray-400 hover:text-primary transition-colors z-10';
+        cloneBtn.className = 'repo-card__clone-btn';
         cloneBtn.title = "Copiar 'git clone'";
-        cloneBtn.innerHTML = '<i data-lucide="clipboard-copy" class="w-4 h-4"></i>';
+        cloneBtn.innerHTML = '<i data-lucide="clipboard-copy"></i>';
         cloneBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             copyCloneCommand(repoCloneUrl, cloneBtn);
@@ -596,7 +596,7 @@ function handleSearch(term) {
 function highlightText(text, term) {
     if (!term || term.length === 0) return text;
     const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-400/30 text-yellow-200 px-1 rounded">$1</mark>');
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
 }
 
 function escapeRegex(string) {
@@ -668,26 +668,25 @@ function generateTreeHTML(node, repoName, branch) {
     entries.forEach(item => {
         if (item.type === 'folder') {
             html += `
-                <details class="group ml-2 open:mb-1">
-                    <summary class="flex items-center gap-2 p-1.5 hover:bg-white/5 rounded cursor-pointer text-[11px] text-gray-400 select-none transition-colors outline-none">
-                        <i data-lucide="folder" class="w-3 h-3 text-yellow-500/80 group-open:hidden"></i>
-                        <i data-lucide="folder-open" class="w-3 h-3 text-yellow-500 hidden group-open:block"></i>
-                        <span class="font-bold text-gray-300 group-hover:text-white">${item.name}</span>
+                <details class="tree-folder">
+                    <summary class="tree-folder__summary">
+                        <i data-lucide="folder" class="tree-folder__icon tree-folder__icon--closed"></i>
+                        <i data-lucide="folder-open" class="tree-folder__icon tree-folder__icon--open"></i>
+                        <span class="tree-folder__name">${item.name}</span>
                     </summary>
-                    <div class="border-l border-white/10 ml-2.5 pl-1 mt-1">
+                    <div class="tree-folder__children">
                         ${generateTreeHTML(item.children, repoName, branch)}
                     </div>
                 </details>
             `;
         } else {
-            // Usamos data-attributes para pasar los datos de forma segura
             html += `
-                <div class="file-node flex items-center gap-2 p-1.5 ml-4 hover:bg-white/10 rounded cursor-pointer text-[10px] text-gray-400 hover:text-primary transition-colors truncate font-mono"
+                <div class="tree-file file-node"
                      onclick="handleFileClick(this)"
                      data-repo="${repoName}"
                      data-branch="${branch}"
                      data-path="${item.path}">
-                    <i data-lucide="file-code" class="w-3 h-3 opacity-50"></i>
+                    <i data-lucide="file-code"></i>
                     ${item.name}
                 </div>
             `;
@@ -710,11 +709,11 @@ async function openRepoViewer(repo) {
     document.getElementById('modal-title').textContent = repo.name;
 
     const fileTree = document.getElementById('file-tree');
-    fileTree.innerHTML = '<div class="text-center p-4 text-primary animate-pulse font-mono text-[10px] uppercase font-bold">Cargando estructura...</div>';
+    fileTree.innerHTML = '<div class="modal__loading--pulse">Cargando estructura...</div>';
     
     // Preparar visor
     const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = '<div class="h-full flex flex-col items-center justify-center opacity-50"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2"></i><p class="text-xs uppercase font-bold">Buscando README...</p></div>';
+    viewer.innerHTML = '<div class="modal__loading"><i data-lucide="loader-2"></i><p class="modal__loading-text">Buscando README...</p></div>';
     lucide.createIcons();
 
     try {
@@ -747,14 +746,14 @@ async function openRepoViewer(repo) {
                 // Si existe, lo cargamos usando un flag 'isReadme' para renderizar Markdown
                 loadReadmeContent(repo.name, repo.default_branch, readmeNode.path);
             } else {
-                viewer.innerHTML = '<div class="flex flex-col items-center opacity-50 mt-20"><i data-lucide="mouse-pointer" class="w-8 h-8 mb-2"></i><p class="text-xs uppercase font-bold">Selecciona un archivo</p></div>';
+                viewer.innerHTML = '<div class="modal__loading"><i data-lucide="mouse-pointer"></i><p class="modal__loading-text">Selecciona un archivo</p></div>';
                 lucide.createIcons();
             }
             // --------------------------
         }
     } catch (e) {
         console.error(e);
-        fileTree.innerHTML = '<div class="text-red-400 p-4 text-center text-[10px]">Error al cargar</div>';
+        fileTree.innerHTML = '<div class="modal__error">Error al cargar</div>';
     }
 }
 
@@ -802,9 +801,9 @@ async function loadReadmeContent(repoName, branch, path) {
     } catch (e) {
         console.error('Error loading README:', e);
         if (e.message === 'API_LIMIT') {
-            viewer.innerHTML = '<div class="p-10 text-center text-yellow-400">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
+            viewer.innerHTML = '<div class="modal__message modal__message--warning">Límite de API alcanzado. Por favor, espera unos minutos.</div>';
         } else {
-            viewer.innerHTML = '<div class="p-10 text-center text-gray-500">No se pudo cargar el README.</div>';
+            viewer.innerHTML = '<div class="modal__message modal__message--muted">No se pudo cargar el README.</div>';
         }
     }
 }
@@ -814,14 +813,14 @@ async function loadReadmeContent(repoName, branch, path) {
 async function loadFileContent(repoName, branch, path, element) {
     // Limpiar selección previa (solo en elementos con clase .file-node)
     document.querySelectorAll('.file-node').forEach(d => {
-        d.classList.remove('text-primary', 'bg-white/10', 'font-bold');
+        d.classList.remove('tree-file--active');
     });
     
     // Marcar actual
-    if(element) element.classList.add('text-primary', 'bg-white/10', 'font-bold');
+    if(element) element.classList.add('tree-file--active');
     
     const viewer = document.getElementById('code-viewer');
-    viewer.innerHTML = '<div class="h-full flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>';
+    viewer.innerHTML = '<div class="modal__loading"><div class="loading-spinner-small" style="width:1.5rem;height:1.5rem;border:2px solid var(--color-primary);border-top-color:transparent;border-radius:9999px;animation:spin 1s linear infinite"></div></div>';
 
     try {
         const cacheKey = `${repoName}:${branch}:${path}`;
@@ -854,11 +853,11 @@ async function loadFileContent(repoName, branch, path, element) {
         }
 
         const escaped = content.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#039;'}[m]));
-        viewer.innerHTML = `<pre class="font-mono text-[10px] text-gray-300 whitespace-pre-wrap break-words h-full overflow-auto custom-scroll p-4 leading-relaxed">${escaped}</pre>`;
+        viewer.innerHTML = `<pre class="code-content">${escaped}</pre>`;
         
     } catch (e) {
         console.error(e);
-        viewer.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-red-400 font-mono text-xs"><i data-lucide="alert-triangle" class="mb-2"></i>Error al cargar archivo</div>';
+        viewer.innerHTML = '<div class="modal__error"><i data-lucide="alert-triangle"></i>Error al cargar archivo</div>';
         lucide.createIcons();
     }
 }
@@ -887,7 +886,7 @@ async function copyCloneCommand(url, btn) {
         
         // Feedback visual: Cambiar icono a Check verde
         const originalContent = btn.innerHTML;
-        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-green-400"></i>`;
+        btn.innerHTML = `<i data-lucide="check" class="clone-success-icon"></i>`;
         lucide.createIcons();
         
         // Restaurar después de 2 segundos
