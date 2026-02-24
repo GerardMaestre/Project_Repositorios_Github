@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
@@ -102,12 +102,6 @@
     <!-- Botón Volver Arriba -->
     <button id="scroll-to-top" class="btn-scroll-top" aria-label="Volver arriba">
         <i data-lucide="arrow-up"></i>
-    </button>
-
-    <!-- Botón Cambiar Tema -->
-    <button id="theme-toggle" class="btn-theme-toggle glass-panel" aria-label="Cambiar tema">
-        <i data-lucide="moon" class="theme-icon dark-icon"></i>
-        <i data-lucide="sun" class="theme-icon light-icon hidden"></i>
     </button>
 
     <!-- Contenido Principal -->
@@ -231,6 +225,11 @@
                                    placeholder="Buscar proyectos...">
                         </div>
                         
+                        <!-- Botón Filtros -->
+                        <button id="toggle-filters-btn" class="btn-filter" title="Mostrar/Ocultar Filtros">
+                            <i data-lucide="sliders-horizontal"></i>
+                        </button>
+
                         <!-- Botón Refrescar -->
                         <button id="refresh-data-btn" 
                                 class="btn-refresh"
@@ -249,7 +248,7 @@
                     </div>
                     
                     <!-- Contenedor de Filtros -->
-                    <div class="filters-row">
+                    <div id="filters-row" class="filters-row hidden">
                         <!-- Botones de Ordenar -->
                         <div class="sort-group">
                             <span class="sort-group__label">Ordenar:</span>

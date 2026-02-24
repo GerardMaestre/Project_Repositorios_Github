@@ -51,9 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         yearElement.textContent = new Date().getFullYear();
     }
     
-    // Initialize theme
-    initTheme();
-    
     initApp();
 
     // Listeners
@@ -65,6 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-input').addEventListener('input', debounce((e) => {
         handleSearch(e.target.value);
     }, 300));
+    
+    // Toggle filters
+    const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+    const filtersRow = document.getElementById('filters-row');
+    if (toggleFiltersBtn && filtersRow) {
+        toggleFiltersBtn.addEventListener('click', () => {
+            filtersRow.classList.toggle('hidden');
+            toggleFiltersBtn.classList.toggle('active');
+        });
+    }
     
     // Keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
@@ -89,10 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100);
     });
-    
-    // Theme toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    themeToggle.addEventListener('click', toggleTheme);
 });
 
 // --- GESTIÓN DE CACHÉ ---
@@ -601,36 +604,6 @@ function highlightText(text, term) {
 
 function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// --- THEME TOGGLE ---
-function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.classList.toggle('light', savedTheme === 'light');
-    updateThemeIcon(savedTheme);
-}
-
-function toggleTheme() {
-    const html = document.documentElement;
-    const isLight = html.classList.contains('light');
-    const newTheme = isLight ? 'dark' : 'light';
-    
-    html.classList.toggle('light');
-    localStorage.setItem('theme', newTheme);
-    updateThemeIcon(newTheme);
-}
-
-function updateThemeIcon(theme) {
-    const darkIcon = document.querySelector('.dark-icon');
-    const lightIcon = document.querySelector('.light-icon');
-    
-    if (theme === 'light') {
-        darkIcon?.classList.add('hidden');
-        lightIcon?.classList.remove('hidden');
-    } else {
-        darkIcon?.classList.remove('hidden');
-        lightIcon?.classList.add('hidden');
-    }
 }
 
 // --- VISOR DE CÓDIGO (Árbol de Directorios) ---
