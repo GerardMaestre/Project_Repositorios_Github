@@ -1,7 +1,7 @@
 // Archivo: generate.js
 const fs = require('fs');
 
-const USERNAME = 'Gmdrax'; // Tu usuario
+const USERNAME = 'GerardMaestre'; // Tu usuario
 
 async function updatePortfolio() {
     console.log(`🤖 Iniciando actualización automática para @${USERNAME}...`);

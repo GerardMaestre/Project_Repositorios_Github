@@ -1,5 +1,5 @@
 // --- CONSTANTES ---
-const USERNAME = 'Gmdrax';
+const USERNAME = 'GerardMaestre';
 const ITEMS_PER_PAGE = 9;
 const CACHE_KEY_USER = `gh_user_${USERNAME}`;
 const CACHE_KEY_REPOS = `gh_repos_${USERNAME}`;
