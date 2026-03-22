@@ -76,26 +76,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
     
-    // Scroll to top button
+    // Scroll to top button — scrolls inside the macOS window content pane
     const scrollBtn = document.getElementById('scroll-to-top');
-    scrollBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    const winContent = document.getElementById('mac-window-content');
     
-    // Show/hide scroll to top button with debounce
-    let scrollTimeout;
-    window.addEventListener('scroll', () => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            if (window.scrollY > 300) {
-                scrollBtn.style.opacity = '1';
-                scrollBtn.style.pointerEvents = 'auto';
-            } else {
-                scrollBtn.style.opacity = '0';
-                scrollBtn.style.pointerEvents = 'none';
-            }
-        }, 100);
-    });
+    if (winContent) {
+        scrollBtn.addEventListener('click', () => {
+            winContent.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Show/hide scroll to top button with debounce
+        let scrollTimeout;
+        winContent.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (winContent.scrollTop > 300) {
+                    scrollBtn.style.opacity = '1';
+                    scrollBtn.style.pointerEvents = 'auto';
+                } else {
+                    scrollBtn.style.opacity = '0';
+                    scrollBtn.style.pointerEvents = 'none';
+                }
+            }, 100);
+        });
+    } else {
+        // Fallback: use window scroll if the mac-window-content element is absent
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (window.scrollY > 300) {
+                    scrollBtn.style.opacity = '1';
+                    scrollBtn.style.pointerEvents = 'auto';
+                } else {
+                    scrollBtn.style.opacity = '0';
+                    scrollBtn.style.pointerEvents = 'none';
+                }
+            }, 100);
+        });
+    }
 });
 
 // --- GESTIÓN DE CACHÉ ---
