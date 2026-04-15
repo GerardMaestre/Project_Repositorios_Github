@@ -2560,3 +2560,53 @@ select:focus-visible {
   .mac-window-area { padding: 6px 6px 4px; }
 }
 
+/* ------ Web mode: remove OS-like chrome and keep regular page flow ------ */
+body.web-mode {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  width: 100%;
+}
+
+body.web-mode .mac-desktop {
+  position: relative;
+  overflow: visible;
+  min-height: 100vh;
+}
+
+body.web-mode .mac-wallpaper,
+body.web-mode .mac-menubar,
+body.web-mode .mac-window__titlebar,
+body.web-mode .mac-dock-container {
+  display: none !important;
+}
+
+body.web-mode .mac-window-area {
+  display: block;
+  padding: 0;
+  overflow: visible;
+}
+
+body.web-mode .mac-window {
+  max-width: none;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+body.web-mode .mac-window__content {
+  overflow: visible;
+}
+
+body.web-mode .main-content {
+  padding-top: 1.5rem;
+}
+
+body.web-mode .btn-scroll-top {
+  bottom: 1.5rem;
+}
+

@@ -76,11 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
     
-    // Scroll to top button — scrolls inside the macOS window content pane
+    // In web mode, use regular window scroll instead of the internal mac window pane.
     const scrollBtn = document.getElementById('scroll-to-top');
     const winContent = document.getElementById('mac-window-content');
+    const useWindowScroll = document.body.classList.contains('web-mode');
     
-    if (winContent) {
+    if (winContent && !useWindowScroll) {
         scrollBtn.addEventListener('click', () => {
             winContent.scrollTo({ top: 0, behavior: 'smooth' });
         });

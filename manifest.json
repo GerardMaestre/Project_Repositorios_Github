@@ -3,7 +3,7 @@
   "short_name": "GerardMaestre Portfolio",
   "description": "Portafolio personal con diseño Glassmorphism que muestra proyectos de GitHub en tiempo real.",
   "start_url": "./index.html", 
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0f0a1f",
   "theme_color": "#8b5cf6",
   "icons": [
