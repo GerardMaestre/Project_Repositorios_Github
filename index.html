@@ -39,12 +39,9 @@
     <!-- Icons - Lucide -->
     <script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
     
-    <!-- Markdown - Fixed version -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
-    
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <script type="module" src="app.js"></script>
     
 </head>
 
@@ -414,65 +411,9 @@
         </div>
     </div>
 
-    <!-- Inicializar Iconos + Clock + Dock + SW -->
+    <!-- Inicializar Iconos -->
     <script>
         lucide.createIcons();
-
-        // macOS clock
-        function updateMacClock() {
-            const el = document.getElementById('mac-clock');
-            if (!el) return;
-            const now = new Date();
-            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-            const day = days[now.getDay()];
-            const date = now.getDate();
-            const month = months[now.getMonth()];
-            const h = now.getHours().toString().padStart(2, '0');
-            const m = now.getMinutes().toString().padStart(2, '0');
-            el.textContent = `${day} ${date} ${month}  ${h}:${m}`;
-        }
-        updateMacClock();
-        setInterval(updateMacClock, 30000);
-
-        // Window control buttons
-        document.getElementById('mac-btn-close').addEventListener('click', () => {
-            const win = document.getElementById('mac-main-window');
-            win.classList.add('mac-window--closed');
-        });
-        document.getElementById('mac-btn-minimize').addEventListener('click', () => {
-            const win = document.getElementById('mac-main-window');
-            win.classList.toggle('mac-window--minimized');
-        });
-        document.getElementById('mac-btn-maximize').addEventListener('click', () => {
-            const win = document.getElementById('mac-main-window');
-            win.classList.toggle('mac-window--fullscreen');
-        });
-
-        // Dock actions
-        document.getElementById('dock-home').addEventListener('click', () => {
-            const winContent = document.getElementById('mac-window-content');
-            if (winContent) winContent.scrollTo({ top: 0, behavior: 'smooth' });
-            // Restore window if closed or minimized
-            const win = document.getElementById('mac-main-window');
-            win.classList.remove('mac-window--closed', 'mac-window--minimized');
-        });
-        document.getElementById('dock-profile').addEventListener('click', () => {
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth' });
-        });
-        document.getElementById('dock-search').addEventListener('click', () => {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                searchInput.focus();
-            }
-        });
-        document.getElementById('dock-repos').addEventListener('click', () => {
-            const reposGrid = document.getElementById('repos-grid');
-            if (reposGrid) reposGrid.scrollIntoView({ behavior: 'smooth' });
-        });
-
     </script>
 
 </body>

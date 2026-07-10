@@ -1,87 +1,71 @@
-// Service Worker para PWA - Liquid Glass Portfolio
-// CAMBIO 1: Cambiamos el nombre de la versión para obligar al navegador a actualizar
-const CACHE_NAME = 'gerardmaestre-portfolio-v4';
+const CACHE_NAME = 'gerardmaestre-portfolio-v5';
 
-// CAMBIO 2: Rutas relativas (./) y añadimos database.json
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
-  './script.js',
+  './app.js',
+  './modules/utils.js',
+  './modules/state.js',
+  './modules/api.js',
+  './modules/ui.js',
   './manifest.json',
-  './database.json'
+  'https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js'
 ];
 
-// Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Cache opened');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.error('Cache failed:', error);
-      })
+      .then((cache) => cache.addAll(urlsToCache))
+      .catch((error) => console.error('Cache failed:', error))
   );
   self.skipWaiting();
 });
 
-// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Borra cualquier caché que no sea la actual (v2)
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((cacheNames) => Promise.all(
+      cacheNames.map((cacheName) => {
+        if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
+      })
+    ))
   );
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Solo interceptamos peticiones HTTP/HTTPS (evitamos chrome-extension://, etc.)
-  if (!event.request.url.startsWith('http')) {
-    return;
+  if (!event.request.url.startsWith('http')) return;
+  const isDynamic = event.request.url.includes('database.json') || event.request.url.includes('api.github.com');
+  if (isDynamic) {
+    event.respondWith(staleWhileRevalidate(event.request));
+  } else {
+    event.respondWith(cacheFirst(event.request));
   }
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clonamos la respuesta válida
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        
-        const responseToCache = response.clone();
-        
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        
-        return response;
-      })
-      .catch(() => {
-        // Si no hay red, buscamos en caché
-        return caches.match(event.request)
-          .then((response) => {
-            if (response) {
-              return response;
-            }
-            // Si no está en caché y es navegación, podríamos devolver una página offline.html
-            return new Response('Offline - No cache available', {
-              status: 503,
-              statusText: 'Service Unavailable'
-            });
-          });
-      })
-  );
 });
+
+async function cacheFirst(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) return cachedResponse;
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cachedResponse = await caches.match(request);
+  const networkFetch = fetch(request).then(async (response) => {
+    if (response.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  }).catch(() => null);
+  return cachedResponse || networkFetch;
+}
