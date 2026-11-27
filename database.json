@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-11-26T07:23:49.134Z",
+  "last_updated": "2026-11-27T07:20:25.008Z",
   "user": {
     "login": "GerardMaestre",
     "name": "Gerard_MF",
@@ -10,20 +10,6 @@
   },
   "repos": [
     {
-      "id": 1471628706,
-      "name": "orbit-versiones",
-      "description": "APK de Orbit (descargas del actualizador)",
-      "html_url": "https://github.com/GerardMaestre/orbit-versiones",
-      "clone_url": "https://github.com/GerardMaestre/orbit-versiones.git",
-      "homepage": null,
-      "language": null,
-      "stargazers_count": 0,
-      "forks_count": 0,
-      "pushed_at": "2026-11-25T22:58:46Z",
-      "default_branch": "main",
-      "topics": []
-    },
-    {
       "id": 1153361289,
       "name": "Project_Repositorios_Github",
       "description": "🚀 Portafolio GitHub \"Glassmorphism\"  Un portafolio personal moderno, estético y totalmente automatizado que consume la API pública de GitHub para mostrar tu perfil, estadísticas y repositorios en tiempo real.",
@@ -33,7 +19,7 @@
       "language": "CSS",
       "stargazers_count": 0,
       "forks_count": 0,
-      "pushed_at": "2026-11-25T07:34:22Z",
+      "pushed_at": "2026-11-26T07:23:50Z",
       "default_branch": "main",
       "topics": []
     },
